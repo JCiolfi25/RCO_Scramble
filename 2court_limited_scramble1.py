@@ -61,6 +61,18 @@ def generate_schedule(num_men, num_women, courts, rounds):
 
     return schedule
 
+def generate_history(schedule):
+    """
+    Generate a history of all player interactions for analysis."""
+    history = list()
+    for round_num, round in enumerate(schedule, start=1):
+        for match in round:
+            ((A, B), (C, D)) = match
+            history.append((round_num, A, B, C, D))
+            history.append((round_num, B, A, C, D))
+            history.append((round_num, C, D, A, B))
+            history.append((round_num, D, C, A, B))
+    return history
 
 def print_schedule(schedule):
     for r, matches in enumerate(schedule, 1):
@@ -120,11 +132,29 @@ def export_schedule_to_csv(schedule, filename="tournament_schedule.csv", matches
 
     print(f"Schedule exported to {filename}")
 
+def export_history_to_csv(history, filename="tournament_history.csv"):
+    """
+    Export the history of player interactions to CSV.
+    Each row represents one player's perspective in a match.
+    """
+    with open(filename, mode="w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["Round", "Player", "Partner", "Opponent1", "Opponent2"])
+
+        for record in history:
+            writer.writerow(record)
+
+    print(f"History exported to {filename}")
+
 if __name__ == "__main__":
     num_players = int(input("Enter number of men (same as women): "))
     courts = int(input("Enter number of available courts: "))
     rounds = int(input("Enter number of rounds to schedule: "))
 
     schedule = generate_schedule(num_players, num_players, courts, rounds)
-    export_schedule_to_csv(schedule, matches_only=True)
-    print_schedule(schedule)
+    print(schedule)
+    history = generate_history(schedule)
+    print(history)
+    export_history_to_csv(history)
+    # export_schedule_to_csv(schedule, matches_only=True)
+    # print_schedule(schedule)
