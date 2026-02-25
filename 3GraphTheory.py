@@ -1,3 +1,5 @@
+# !!! CREATE BRANCH FOR DOING ODD NUMBERS!!
+
 # Butters: "Weighted Undirected Complete Graph"
 # The graph is even after every LCM(N, N-1) rounds, where N is the number of men and also the number of women
 # With number of men/women not divisible by 2, it gets wonky; need to add a heuristic to even out the number of games played by each player (could use len of teammates as proxy for games played)
