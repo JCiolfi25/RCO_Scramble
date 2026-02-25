@@ -1,5 +1,7 @@
 # Butters: "Weighted Undirected Complete Graph"
 # The graph is even after every LCM(N, N-1) rounds, where N is the number of men and also the number of women
+# With number of men/women not divisible by 2, it gets wonky; need to add a heuristic to even out the number of games played by each player (could use len of teammates as proxy for games played)
+    # Maybe, when calculating edge weights, add something like 0.001 per teammate each person has had in that edge, to encourage more even distribution of games played among players
 import csv
 import itertools
 class Player:
@@ -109,8 +111,8 @@ class Schedule:
                 writer.writerow([game_num, D.name, C.name, A.name, B.name])
                 game_num += 1
 if __name__ == "__main__":
-    n = 4
-    rounds= 12
+    n = 3
+    rounds= 10
     players_men = list()
     for i in range(n):
         players_men.append(Player(f"M{i+1}"))
@@ -158,7 +160,7 @@ if __name__ == "__main__":
         for game in round.Cull():
             game.Print()
             scheddy.AddGame(game)
-    # scheddy.Print()
+    scheddy.Print()
     print(even_round_numbers)
     scheddy.ExportHistoryCSV()
 
