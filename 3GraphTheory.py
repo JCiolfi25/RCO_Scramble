@@ -9,6 +9,12 @@
     # Maybe, when calculating edge weights, add something like 0.001 per teammate each person has had in that edge, to encourage more even distribution of games played among players
 import csv
 import itertools
+
+opponent_history_weight = 1 # Weight added to edge for each time a player in a team on the edge has already played against that opponent (non-reciprocal)
+teammate_history_weight = 0.001 # Weight added to edge for each time a player in a team on the edge has already played with that teammate
+games_played_weight = 0.001 # Weight added to edge for each game a player in a team on the edge has played (tracked as number of past teammates), to encourage more even distribution of games played among players
+
+
 class Player:
     def __init__(self, name):
         self.name = name
@@ -70,14 +76,18 @@ class Edge:
         # Calculate weight based on past interactions
         p1, p2 = self.team1.player1, self.team1.player2
         p3, p4 = self.team2.player1, self.team2.player2
-        # For each time a player has played another player, add 1 to the weight
-        self.weight += p3.past_opponents.count(p1)
-        self.weight += p4.past_opponents.count(p1)
-        self.weight += p3.past_opponents.count(p2)
-        self.weight += p4.past_opponents.count(p2)
-        # For each game a player has played (tracked as number of past teammates), add 0.001 to the weight to encourage more even distribution of games played among players
+        # For each time a player has played another player, add opponent_history_weight to the weight
+        self.weight += p3.past_opponents.count(p1) * opponent_history_weight
+        self.weight += p4.past_opponents.count(p1) * opponent_history_weight
+        self.weight += p3.past_opponents.count(p2) * opponent_history_weight
+        self.weight += p4.past_opponents.count(p2) * opponent_history_weight
+        
+        # For each time a player has played with a teammate, add teammate_history_weight to the weight
+        self.weight += p1.past_teammates.count(p2) * teammate_history_weight
+        self.weight += p3.past_teammates.count(p4) * teammate_history_weight
+        # For each game a player has played (tracked as number of past teammates), add games_played_weight to the weight to encourage more even distribution of games played among players
         for p in [p1, p2, p3, p4]:
-            self.weight += 0.001 * len(p.past_teammates)
+            self.weight += games_played_weight * len(p.past_teammates)
 class Game:
     def __init__(self, team1, team2):
         self.team1 = team1
