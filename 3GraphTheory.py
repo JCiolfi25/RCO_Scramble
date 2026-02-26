@@ -1,4 +1,7 @@
-# !!! CREATE BRANCH FOR DOING ODD NUMBERS!!
+# Seems to be correctly implementing byes, as well as printing schedule with limited number of courts 
+# Also implemented optional numCourts to be passed to Edge.Cull() to select that many games with lowest weights; if numCourts is unspecified and therefore None, it will select as many games as possible without repeating teams
+#       Unsure if Edge.Cull() should ever actually be passed numCourts; if it is, those "extra" games from that round will be thrown out and those other teams won't be used.  As of now, those "extra" games just get bumped to the next round.
+#        Believe I need some kind of scoring algorithm for tournament_history.csv to determine which algorithm is better for creating overall schedule
 
 # Butters: "Weighted Undirected Complete Graph"
 # The graph is even after every LCM(N, N-1) rounds, where N is the number of men and also the number of women
@@ -44,7 +47,7 @@ class Round:
         for edge in self.edges:
             edge.WeightSelf()
         self.isWeighted = True
-    def Cull(self): # Select games with lowest weights
+    def Cull(self, numCourts=None): # Select games with lowest weights; if numCourts is specified, select that many games; otherwise, select as many games as possible without repeating teams
         # Round.Cull() returns the list of games to be played this round, based on edge weights
         self.edges.sort(key=lambda e: e.weight)
         selected_games = list()
@@ -54,6 +57,8 @@ class Round:
                 selected_games.append(Game(edge.team1, edge.team2))
                 used_teams.add(edge.team1)
                 used_teams.add(edge.team2)
+                if len(selected_games) == numCourts: # if numCourts is unspecified and therefore None, this condition will never be true and it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
+                    break
         self.isCulled = True
         return selected_games
 class Edge:
@@ -80,8 +85,9 @@ class Game:
     def Print(self):
         print(f"Game: {self.team1.name} vs {self.team2.name}")
 class Schedule:
-    def __init__(self):
+    def __init__(self, numCourts=None):
         self.games=list()
+        self.numCourts = numCourts
     def AddGame(self, game):
         # Schedule.AddGame(game) also updates the relevant players' past teammates and opponents lists
         self.games.append(game)
@@ -111,10 +117,36 @@ class Schedule:
                 writer.writerow([game_num, C.name, D.name, A.name, B.name])
                 writer.writerow([game_num, D.name, C.name, A.name, B.name])
                 game_num += 1
+    def ExportScheduleCSV(self, filename="tournament_schedule.csv"):
+        with open(filename, mode="w", newline="") as file:
+            writer = csv.writer(file)
+            if self.numCourts ==None or self.numCourts == 1:
+                writer.writerow(["Game", "Team1", "Team2"])
+                game_num = 1
+                for game in self.games:
+                    writer.writerow([game_num, game.team1.name, game.team2.name])
+                    game_num += 1
+            else:
+                header = ["Round"]
+                for i in range(self.numCourts):
+                    header.extend([f"Court {i+1} Team1", f"Court {i+1} Team2"])
+                # header.extend([*(f"Court {i+1} Team1", f"Court {i+1} Team2") for i in range(self.numCourts)])
+                writer.writerow(header)
+                game_num = 1
+                row = list([game_num//self.numCourts + 1])
+                for game in self.games:
+                    row.extend([game.team1.name, game.team2.name])
+                    if game_num % self.numCourts == 0:
+                        writer.writerow(row)
+                        row = list([game_num//self.numCourts + 1])
+                    game_num += 1
+                if len(row) > 1:
+                    writer.writerow(row)
 
 if __name__ == "__main__":
-    n = 3
-    rounds= 10
+    n = 4 # Number of men and also number of women
+    rounds= 21
+    num_courts = 1
     players_men = list()
     for i in range(n):
         players_men.append(Player(f"M{i+1}"))
@@ -124,9 +156,9 @@ if __name__ == "__main__":
         players_women.append(Player(f"W{i+1}"))
         players_women[i].is_man = False
 
-    print(players_men)
-    print(players_women)
-    print("================================")
+    # print(players_men)
+    # print(players_women)
+    # print("================================")
 
     rounds_all_teams = list()
     for r in range(rounds):
@@ -137,19 +169,20 @@ if __name__ == "__main__":
         for team in (zip(players_men, rotated_women)):
             next_round_teams.append(Team(*team))
         rounds_all_teams.append(next_round_teams)
-    num_teams = 0
-    for i in range(len(rounds_all_teams)):
-        round = rounds_all_teams[i]
-        for team in round:
-            num_teams += 1
-            team.Print()
-        print("")
-    print(num_teams)
+
+    # num_teams = 0
+    # for i in range(len(rounds_all_teams)):
+    #     round = rounds_all_teams[i]
+    #     for team in round:
+    #         num_teams += 1
+            # team.Print()
+        # print("")
+    # print(num_teams)
     
     rounds=list()
     for round in rounds_all_teams:
         rounds.append(Round(round))
-    scheddy = Schedule()
+    scheddy = Schedule(numCourts=num_courts)
     even_round_numbers = list() #???
     for i in range(len(rounds)):
         print(f"=== ROUND {i+1} ===")
@@ -165,6 +198,7 @@ if __name__ == "__main__":
     scheddy.Print()
     print(even_round_numbers)
     scheddy.ExportHistoryCSV()
+    scheddy.ExportScheduleCSV()
 
 
 
