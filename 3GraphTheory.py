@@ -10,10 +10,11 @@
 import csv
 import itertools
 
+repeat_exponential = 2 # Exponent applied to number of repeats when calculating edge weights, to make further repeats heavier; can be adjusted to make the algorithm more or less averse to repeats
 opponent_history_weight = 1 # Weight added to edge for each time a player in a team on the edge has already played against that opponent (non-reciprocal)
 teammate_history_weight = 0.001 # Weight added to edge for each time a player in a team on the edge has already played with that teammate
 games_played_weight = 0.001 # Weight added to edge for each game a player in a team on the edge has played (tracked as number of past teammates), to encourage more even distribution of games played among players
-
+# Note games_played_weight is essentially multiplied by 4 because it's counted per player
 
 class Player:
     def __init__(self, name):
@@ -21,11 +22,24 @@ class Player:
         self.is_man = None
         self.past_teammates = list()  
         self.past_opponents = list()
-    def Print(self, include_history=False):
+        self.repeat_teammates = 0
+        self.repeat_opponents = 0
+        self.games_played = 0
+    def Print(self, include_history=False, include_stats=False):
         print(f"Player: {self.name}")
         if include_history:
             print(f"  Past Teammates: {[p.name for p in self.past_teammates]}")
             print(f"  Past Opponents: {[p.name for p in self.past_opponents]}")
+        if include_stats:
+            print(f"  Games Played: {self.games_played}")
+            print(f"  Repeat Teammates: {self.repeat_teammates}")
+            print(f"  Repeat Opponents: {self.repeat_opponents}")
+    def UpdateStats(self):
+        self.past_opponents.sort(key=lambda p: p.name)
+        self.past_teammates.sort(key=lambda p: p.name)
+        self.repeat_teammates = len(self.past_teammates) - len(set(self.past_teammates))
+        self.repeat_opponents = len(self.past_opponents) - len(set(self.past_opponents))
+        self.games_played = len(self.past_teammates) # Using number of past teammates as a proxy for games played, since each game adds exactly one teammate
 class Team:
     def __init__(self, player1, player2):
         self.player1 = player1
@@ -76,15 +90,15 @@ class Edge:
         # Calculate weight based on past interactions
         p1, p2 = self.team1.player1, self.team1.player2
         p3, p4 = self.team2.player1, self.team2.player2
-        # For each time a player has played another player, add opponent_history_weight to the weight
-        self.weight += p3.past_opponents.count(p1) * opponent_history_weight
-        self.weight += p4.past_opponents.count(p1) * opponent_history_weight
-        self.weight += p3.past_opponents.count(p2) * opponent_history_weight
-        self.weight += p4.past_opponents.count(p2) * opponent_history_weight
+        # For each time a player has played another player, add opponent_history_weight to the weight; squared so further repeats are heavier
+        self.weight += p3.past_opponents.count(p1)**repeat_exponential * opponent_history_weight
+        self.weight += p4.past_opponents.count(p1)**repeat_exponential * opponent_history_weight
+        self.weight += p3.past_opponents.count(p2)**repeat_exponential * opponent_history_weight
+        self.weight += p4.past_opponents.count(p2)**repeat_exponential * opponent_history_weight
         
-        # For each time a player has played with a teammate, add teammate_history_weight to the weight
-        self.weight += p1.past_teammates.count(p2) * teammate_history_weight
-        self.weight += p3.past_teammates.count(p4) * teammate_history_weight
+        # For each time a player has played with a teammate, add teammate_history_weight to the weight; squared so further repeats are heavier
+        self.weight += p1.past_teammates.count(p2)**repeat_exponential * teammate_history_weight
+        self.weight += p3.past_teammates.count(p4)**repeat_exponential * teammate_history_weight
         # For each game a player has played (tracked as number of past teammates), add games_played_weight to the weight to encourage more even distribution of games played among players
         for p in [p1, p2, p3, p4]:
             self.weight += games_played_weight * len(p.past_teammates)
@@ -105,12 +119,16 @@ class Schedule:
         (P1, P2, P3, P4) = (game.team1.player1, game.team1.player2, game.team2.player1, game.team2.player2)
         P1.past_teammates.append(P2)
         P1.past_opponents.extend([P3, P4])
+        P1.UpdateStats()
         P2.past_teammates.append(P1)
         P2.past_opponents.extend([P3, P4])
+        P2.UpdateStats()
         P3.past_teammates.append(P4)
         P3.past_opponents.extend([P1, P2])
+        P3.UpdateStats()
         P4.past_teammates.append(P3)
         P4.past_opponents.extend([P1, P2])
+        P4.UpdateStats()
     def Print(self):
         print("Schedule:")
         for game in self.games:
@@ -130,7 +148,7 @@ class Schedule:
     def ExportScheduleCSV(self, filename="tournament_schedule.csv"):
         with open(filename, mode="w", newline="") as file:
             writer = csv.writer(file)
-            if self.numCourts ==None or self.numCourts == 1:
+            if self.numCourts == None:# or self.numCourts == 1:
                 writer.writerow(["Game", "Team1", "Team2"])
                 game_num = 1
                 for game in self.games:
@@ -143,7 +161,7 @@ class Schedule:
                 # header.extend([*(f"Court {i+1} Team1", f"Court {i+1} Team2") for i in range(self.numCourts)])
                 writer.writerow(header)
                 game_num = 1
-                row = list([game_num//self.numCourts + 1])
+                row = list([1]) # Start with round 1
                 for game in self.games:
                     row.extend([game.team1.name, game.team2.name])
                     if game_num % self.numCourts == 0:
@@ -153,10 +171,32 @@ class Schedule:
                 if len(row) > 1:
                     writer.writerow(row)
 
+def PrintStats(players, num_games = None, print_individuals=False, print_overall=False):
+    list_repeat_teammates_nums = list()
+    list_repeat_opponents_nums = list()
+    list_games_played_nums = list()
+    for player in players:
+        player.UpdateStats()
+        list_repeat_teammates_nums.append(player.repeat_teammates)
+        list_repeat_opponents_nums.append(player.repeat_opponents)
+        list_games_played_nums.append(player.games_played)
+        if print_individuals: 
+            player.Print(include_history=True, include_stats=True)
+    if print_overall:
+        print("")
+        print("Repeat Opponents per player Overall:\n\tMin: \t{},\n\tMax: \t{},\n\tAvg: \t{}".format(min(list_repeat_opponents_nums), max(list_repeat_opponents_nums), sum(list_repeat_opponents_nums)/len(list_repeat_opponents_nums)))
+        print("Repeat Teammates per player Overall:\n\tMin: \t{},\n\tMax: \t{},\n\tAvg: \t{}".format(min(list_repeat_teammates_nums), max(list_repeat_teammates_nums), sum(list_repeat_teammates_nums)/len(list_repeat_teammates_nums)))
+        print("Games Played per player Overall:\n\tMin: \t{},\n\tMax: \t{},\n\tAvg: \t{}".format(min(list_games_played_nums), max(list_games_played_nums), sum(list_games_played_nums)/len(list_games_played_nums)))
+        # if num_games is not None:
+        #     print(f"Optimal for {num_games} total games and {len(players)} total players - ")
+        #     print(f"\tMinimum possible teammate repeats per player, assuming equal men and women: {num_games//(len(players)/2-1)}") # Each player can have at most (number of players/2 - 1) unique teammates, assuming equal men and women
+        #     print(f"\tMinimum possible opponent repeats per player, assuming equal men and women: {num_games//(len(players)/2)}") # Each player can have at most (number of players) unique opponents, assuming equal men and women
+        #     print(f"\tOptimal games played per player: {num_games/(len(players)/4)}") # Each game involves 4 players, so optimal games played per player is total games divided by (number of players / 4)
+    
 if __name__ == "__main__":
     n = 4 # Number of men and also number of women
-    rounds= 21
-    num_courts = 1
+    num_rounds= 11
+    num_courts = 1 # Set to None for unlimited courts (i.e. as many games as possible per round without repeating teams); set to specific number for that many courts (i.e. that many games per round, which may result in some teams not playing in some rounds)
     players_men = list()
     for i in range(n):
         players_men.append(Player(f"M{i+1}"))
@@ -171,7 +211,7 @@ if __name__ == "__main__":
     # print("================================")
 
     rounds_all_teams = list()
-    for r in range(rounds):
+    for r in range(num_rounds):
         n_len = len(players_men)
         # Rotate women to create unique partners
         rotated_women = players_women[r%n_len:] + players_women[:r%n_len]
@@ -194,22 +234,25 @@ if __name__ == "__main__":
         rounds.append(Round(round))
     scheddy = Schedule(numCourts=num_courts)
     even_round_numbers = list() #???
+    games_added = 0
     for i in range(len(rounds)):
-        print(f"=== ROUND {i+1} ===")
+        # print(f"=== ROUND {i+1} ===")
         round = rounds[i]
         round.WeightEdges()
-        round.Print(print_edges=True)
+        # round.Print(print_edges=True)
         round_weights = [edge.weight for edge in round.edges]
         if len(set(round_weights)) == 1:
             even_round_numbers.append(i+1)
-        for game in round.Cull():
-            game.Print()
-            scheddy.AddGame(game)
-    scheddy.Print()
-    print(even_round_numbers)
+        for game in round.Cull(numCourts=None): # If numCourts is None, it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
+            if num_courts == None or (games_added < num_courts * num_rounds): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
+                # game.Print()
+                scheddy.AddGame(game)
+                games_added += 1
+    # scheddy.Print()
+    # print(even_round_numbers)
     scheddy.ExportHistoryCSV()
     scheddy.ExportScheduleCSV()
 
-
+    PrintStats(players_men + players_women, print_individuals=True, print_overall=True)
 
     print("Done")
