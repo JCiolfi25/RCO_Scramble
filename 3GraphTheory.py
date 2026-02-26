@@ -61,19 +61,14 @@ class Edge:
         # Calculate weight based on past interactions
         p1, p2 = self.team1.player1, self.team1.player2
         p3, p4 = self.team2.player1, self.team2.player2
-        # Check if any players have been opponents before
+        # For each time a player has played another player, add 1 to the weight
         self.weight += p3.past_opponents.count(p1)
         self.weight += p4.past_opponents.count(p1)
         self.weight += p3.past_opponents.count(p2)
         self.weight += p4.past_opponents.count(p2)
-        # if p1 in p3.past_opponents:
-        #     self.weight += 1  # Increase weight for past opponent
-        # if p1 in p4.past_opponents:
-        #     self.weight += 1  # Increase weight for past opponent
-        # if p2 in p3.past_opponents :
-        #     self.weight += 1  # Increase weight for past opponent
-        # if p2 in p4.past_opponents:
-        #     self.weight += 1  # Increase weight for past opponent
+        # For each game a player has played (tracked as number of past teammates), add 0.001 to the weight to encourage more even distribution of games played among players
+        for p in [p1, p2, p3, p4]:
+            self.weight += 0.001 * len(p.past_teammates)
 class Game:
     def __init__(self, team1, team2):
         self.team1 = team1
