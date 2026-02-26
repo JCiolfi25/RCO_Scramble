@@ -1,1 +1,0 @@
-Butters: "Weighted Undirected Complete Graph"
