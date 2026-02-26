@@ -28,6 +28,8 @@ class Round:
     def __init__(self, teams):
         self.teams = teams # (Team1, Team2, ...)
         self.edges = list()
+        self.isWeighted = False
+        self.isCulled = False
         for teams in itertools.combinations(teams, 2):
             self.edges.append(Edge(*teams, 0))
     def Print(self, print_edges=False):
@@ -41,6 +43,7 @@ class Round:
     def WeightEdges(self):
         for edge in self.edges:
             edge.WeightSelf()
+        self.isWeighted = True
     def Cull(self): # Select games with lowest weights
         # Round.Cull() returns the list of games to be played this round, based on edge weights
         self.edges.sort(key=lambda e: e.weight)
@@ -51,6 +54,7 @@ class Round:
                 selected_games.append(Game(edge.team1, edge.team2))
                 used_teams.add(edge.team1)
                 used_teams.add(edge.team2)
+        self.isCulled = True
         return selected_games
 class Edge:
     def __init__(self, team1, team2, weight):
@@ -107,6 +111,7 @@ class Schedule:
                 writer.writerow([game_num, C.name, D.name, A.name, B.name])
                 writer.writerow([game_num, D.name, C.name, A.name, B.name])
                 game_num += 1
+
 if __name__ == "__main__":
     n = 3
     rounds= 10
