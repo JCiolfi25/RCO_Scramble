@@ -1,0 +1,5 @@
+- Teammate history should be weighted as least as heavily as opponent history, for cases when some teams get skipped due to odd numbers or limited courts
+- Past number of games played should likely be given even higher weighting than repeating players on the court
+- Create and implement "weighting coefficients" variables with the other variables, for repeat opponents, repeat teammates, and number of games played
+- Create "update stats" function in Player that goes through and calculates num games, num repeat same gender opponents, repeat diff gender opponents, and repeat teammates
+- Create Stats function for the schedule that will generate overall stats (min/max/avg)
