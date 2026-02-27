@@ -6,9 +6,11 @@ CONCEPTS:
 - Should same-gender opponent repeating be weighted differently than cross-gender opponent repeat?
 
 TACTICAL TODO:
+- Have stats printout also save to CSV, appending stats as well as NumMen/Women, num rounds, and num courts
+- Test for Num Men != Num Women
 x Create and implement "weighting coefficients" variables with the other variables, for repeat opponents, repeat teammates, and number of games played
-- Create "update stats" function in Player that goes through and calculates num games, num repeat same gender opponents, repeat diff gender opponents, and repeat teammates
-- Create Stats function for the schedule that will generate overall stats (min/max/avg)
+x Create "update stats" function in Player that goes through and calculates num games, num repeat same gender opponents, repeat diff gender opponents, and repeat teammates
+x Create Stats function for the schedule that will generate overall stats (min/max/avg)
 
 
 ALGORITHM OPTIMIZING:
@@ -18,4 +20,10 @@ Algorithm handles:
 - including num_courts in the cull function vs not
 - repeat_exponential of 0, 1, 2, 3
 - differening opponent, teammate, and games played weights
+
+Need to review algorithm and trial-and-error different algorithm handles, to get it to best handle all cases:
+- Num Men != Num Women
+- Num Men and/or Num Women being odd
+- Small Num Rounds
+- Small Num Courts
 

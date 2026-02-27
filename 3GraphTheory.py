@@ -9,12 +9,17 @@
     # Maybe, when calculating edge weights, add something like 0.001 per teammate each person has had in that edge, to encourage more even distribution of games played among players
 import csv
 import itertools
+from datetime import datetime
 
 repeat_exponential = 2 # Exponent applied to number of repeats when calculating edge weights, to make further repeats heavier; can be adjusted to make the algorithm more or less averse to repeats
 opponent_history_weight = 1 # Weight added to edge for each time a player in a team on the edge has already played against that opponent (non-reciprocal)
 teammate_history_weight = 0.001 # Weight added to edge for each time a player in a team on the edge has already played with that teammate
-games_played_weight = 0.001 # Weight added to edge for each game a player in a team on the edge has played (tracked as number of past teammates), to encourage more even distribution of games played among players
+games_played_weight = 10 # Weight added to edge for each game a player in a team on the edge has played (tracked as number of past teammates), to encourage more even distribution of games played among players
 # Note games_played_weight is essentially multiplied by 4 because it's counted per player
+
+cull_num_courts = True 
+# if true, Round.Cull() will be passed numCourts to select that many games with lowest weights; 
+# if false, Round.Cull() will select as many games as possible without repeating teams and all games will be passed into the schedule (games that don't fit will pass to next round)
 
 class Player:
     def __init__(self, name):
@@ -171,10 +176,12 @@ class Schedule:
                 if len(row) > 1:
                     writer.writerow(row)
 
-def PrintStats(players, num_games = None, print_individuals=False, print_overall=False):
+def PrintStats(players, num_rounds=None, num_courts=None, num_games=None, print_individuals=False, print_overall=False, csv_append=False):
     list_repeat_teammates_nums = list()
     list_repeat_opponents_nums = list()
     list_games_played_nums = list()
+    num_men = len([p for p in players if p.is_man])
+    num_women = len([p for p in players if not p.is_man])
     for player in players:
         player.UpdateStats()
         list_repeat_teammates_nums.append(player.repeat_teammates)
@@ -192,11 +199,16 @@ def PrintStats(players, num_games = None, print_individuals=False, print_overall
         #     print(f"\tMinimum possible teammate repeats per player, assuming equal men and women: {num_games//(len(players)/2-1)}") # Each player can have at most (number of players/2 - 1) unique teammates, assuming equal men and women
         #     print(f"\tMinimum possible opponent repeats per player, assuming equal men and women: {num_games//(len(players)/2)}") # Each player can have at most (number of players) unique opponents, assuming equal men and women
         #     print(f"\tOptimal games played per player: {num_games/(len(players)/4)}") # Each game involves 4 players, so optimal games played per player is total games divided by (number of players / 4)
-    
+    if csv_append:
+        with open("tournament_stats.csv", mode="a", newline="") as file:
+            writer = csv.writer(file)
+            stats = [datetime.now(), num_rounds, num_courts, num_men, num_women, num_games, min(list_repeat_opponents_nums), max(list_repeat_opponents_nums), sum(list_repeat_opponents_nums)/len(list_repeat_opponents_nums), min(list_repeat_teammates_nums), max(list_repeat_teammates_nums), sum(list_repeat_teammates_nums)/len(list_repeat_teammates_nums), min(list_games_played_nums), max(list_games_played_nums), sum(list_games_played_nums)/len(list_games_played_nums)]
+            algo = [cull_num_courts, repeat_exponential, opponent_history_weight, teammate_history_weight, games_played_weight]
+            writer.writerow(stats + algo)
 if __name__ == "__main__":
-    n = 4 # Number of men and also number of women
-    num_rounds= 11
-    num_courts = 1 # Set to None for unlimited courts (i.e. as many games as possible per round without repeating teams); set to specific number for that many courts (i.e. that many games per round, which may result in some teams not playing in some rounds)
+    n = 5 # Number of men and also number of women
+    num_rounds= 12
+    num_courts = 2 # Set to None for unlimited courts (i.e. as many games as possible per round without repeating teams); set to specific number for that many courts (i.e. that many games per round, which may result in some teams not playing in some rounds)
     players_men = list()
     for i in range(n):
         players_men.append(Player(f"M{i+1}"))
@@ -243,7 +255,7 @@ if __name__ == "__main__":
         round_weights = [edge.weight for edge in round.edges]
         if len(set(round_weights)) == 1:
             even_round_numbers.append(i+1)
-        for game in round.Cull(numCourts=None): # If numCourts is None, it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
+        for game in round.Cull(numCourts=(num_courts if cull_num_courts else None)): # If numCourts is None, it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
             if num_courts == None or (games_added < num_courts * num_rounds): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
                 # game.Print()
                 scheddy.AddGame(game)
@@ -253,6 +265,6 @@ if __name__ == "__main__":
     scheddy.ExportHistoryCSV()
     scheddy.ExportScheduleCSV()
 
-    PrintStats(players_men + players_women, print_individuals=True, print_overall=True)
+    PrintStats(players_men + players_women, print_individuals=True, num_courts=num_courts, num_rounds=num_rounds, num_games=games_added, print_overall=True, csv_append=True)
 
     print("Done")
