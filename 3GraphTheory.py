@@ -11,16 +11,25 @@ import csv
 import itertools
 from datetime import datetime
 
-repeat_exponential = 2 # Exponent applied to number of repeats when calculating edge weights, to make further repeats heavier; can be adjusted to make the algorithm more or less averse to repeats
-opponent_history_weight = 1 # Weight added to edge for each time a player in a team on the edge has already played against that opponent (non-reciprocal)
-teammate_history_weight = 0.001 # Weight added to edge for each time a player in a team on the edge has already played with that teammate
-games_played_weight = 10 # Weight added to edge for each game a player in a team on the edge has played (tracked as number of past teammates), to encourage more even distribution of games played among players
-# Note games_played_weight is essentially multiplied by 4 because it's counted per player
+class AlgoParams:
+    def __init__(self, repeat_exponential, opponent_history_weight, teammate_history_weight, games_played_weight, cull_num_courts):
+        self.repeat_exponential = repeat_exponential # Exponent applied to number of repeats when calculating edge weights, to make further repeats heavier; can be adjusted to make the algorithm more or less averse to repeats
+        self.opponent_history_weight = opponent_history_weight # Weight added to edge for each time a player in a team on the edge has already played against that opponent (non-reciprocal)
+        self.teammate_history_weight = teammate_history_weight  # Weight added to edge for each time a player in a team on the edge has already played with that teammate
+        self.games_played_weight = games_played_weight # Weight added to edge for each game a player in a team on the edge has played (tracked as number of past teammates), to encourage more even distribution of games played among players
+        # Note games_played_weight is essentially multiplied by 4 because it's counted per player
 
-cull_num_courts = True 
-# if true, Round.Cull() will be passed numCourts to select that many games with lowest weights; 
-# if false, Round.Cull() will select as many games as possible without repeating teams and all games will be passed into the schedule (games that don't fit will pass to next round)
+        self.cull_num_courts = cull_num_courts
+        # if true, Round.Cull() will be passed numCourts to select that many games with lowest weights; 
+        # if false, Round.Cull() will select as many games as possible without repeating teams and all games will be passed into the schedule (games that don't fit will pass to next round)
 
+    def Print(self):
+        print(f"Algorithm Parameters:")
+        print(f"  Repeat Exponential: {self.repeat_exponential}")
+        print(f"  Opponent History Weight: {self.opponent_history_weight}")
+        print(f"  Teammate History Weight: {self.teammate_history_weight}")
+        print(f"  Games Played Weight: {self.games_played_weight}")
+        print(f"  Cull Num Courts: {self.cull_num_courts}")
 class Player:
     def __init__(self, name):
         self.name = name
@@ -68,9 +77,9 @@ class Round:
             print("Edges:")
             for edge in self.edges:
                 print(f"  {edge.team1.name} - {edge.team2.name}: {edge.weight}")
-    def WeightEdges(self):
+    def WeightEdges(self, algo_params):
         for edge in self.edges:
-            edge.WeightSelf()
+            edge.WeightSelf(algo_params)
         self.isWeighted = True
     def Cull(self, numCourts=None): # Select games with lowest weights; if numCourts is specified, select that many games; otherwise, select as many games as possible without repeating teams
         # Round.Cull() returns the list of games to be played this round, based on edge weights
@@ -91,22 +100,22 @@ class Edge:
         self.team1 = team1
         self.team2 = team2
         self.weight = weight
-    def WeightSelf(self):
+    def WeightSelf(self, algo_params):
         # Calculate weight based on past interactions
         p1, p2 = self.team1.player1, self.team1.player2
         p3, p4 = self.team2.player1, self.team2.player2
         # For each time a player has played another player, add opponent_history_weight to the weight; squared so further repeats are heavier
-        self.weight += p3.past_opponents.count(p1)**repeat_exponential * opponent_history_weight
-        self.weight += p4.past_opponents.count(p1)**repeat_exponential * opponent_history_weight
-        self.weight += p3.past_opponents.count(p2)**repeat_exponential * opponent_history_weight
-        self.weight += p4.past_opponents.count(p2)**repeat_exponential * opponent_history_weight
+        self.weight += p3.past_opponents.count(p1)**algo_params.repeat_exponential * algo_params.opponent_history_weight
+        self.weight += p4.past_opponents.count(p1)**algo_params.repeat_exponential * algo_params.opponent_history_weight
+        self.weight += p3.past_opponents.count(p2)**algo_params.repeat_exponential * algo_params.opponent_history_weight
+        self.weight += p4.past_opponents.count(p2)**algo_params.repeat_exponential * algo_params.opponent_history_weight
         
         # For each time a player has played with a teammate, add teammate_history_weight to the weight; squared so further repeats are heavier
-        self.weight += p1.past_teammates.count(p2)**repeat_exponential * teammate_history_weight
-        self.weight += p3.past_teammates.count(p4)**repeat_exponential * teammate_history_weight
+        self.weight += p1.past_teammates.count(p2)**algo_params.repeat_exponential * algo_params.teammate_history_weight
+        self.weight += p3.past_teammates.count(p4)**algo_params.repeat_exponential * algo_params.teammate_history_weight
         # For each game a player has played (tracked as number of past teammates), add games_played_weight to the weight to encourage more even distribution of games played among players
         for p in [p1, p2, p3, p4]:
-            self.weight += games_played_weight * len(p.past_teammates)
+            self.weight += algo_params.games_played_weight * len(p.past_teammates)
 class Game:
     def __init__(self, team1, team2):
         self.team1 = team1
@@ -176,7 +185,7 @@ class Schedule:
                 if len(row) > 1:
                     writer.writerow(row)
 
-def PrintStats(players, num_rounds=None, num_courts=None, num_games=None, print_individuals=False, print_overall=False, csv_append=False):
+def PrintStats(players, algo_params, num_rounds=None, num_courts=None, num_games=None, print_individuals=False, print_overall=False, csv_append=False):
     list_repeat_teammates_nums = list()
     list_repeat_opponents_nums = list()
     list_games_played_nums = list()
@@ -203,9 +212,19 @@ def PrintStats(players, num_rounds=None, num_courts=None, num_games=None, print_
         with open("tournament_stats.csv", mode="a", newline="") as file:
             writer = csv.writer(file)
             stats = [datetime.now(), num_rounds, num_courts, num_men, num_women, num_games, min(list_repeat_opponents_nums), max(list_repeat_opponents_nums), sum(list_repeat_opponents_nums)/len(list_repeat_opponents_nums), min(list_repeat_teammates_nums), max(list_repeat_teammates_nums), sum(list_repeat_teammates_nums)/len(list_repeat_teammates_nums), min(list_games_played_nums), max(list_games_played_nums), sum(list_games_played_nums)/len(list_games_played_nums)]
-            algo = [cull_num_courts, repeat_exponential, opponent_history_weight, teammate_history_weight, games_played_weight]
+            algo = [algo_params.cull_num_courts, algo_params.repeat_exponential, algo_params.opponent_history_weight, algo_params.teammate_history_weight, algo_params.games_played_weight]
             writer.writerow(stats + algo)
 if __name__ == "__main__":
+        
+    # repeat_exponential = 2 
+    # opponent_history_weight = 1 
+    # teammate_history_weight = 0.001
+    # games_played_weight = 10 
+
+
+    # cull_num_courts = True 
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=0.001, games_played_weight=10, cull_num_courts=True)
+    algo_params.Print()
     n = 5 # Number of men and also number of women
     num_rounds= 12
     num_courts = 2 # Set to None for unlimited courts (i.e. as many games as possible per round without repeating teams); set to specific number for that many courts (i.e. that many games per round, which may result in some teams not playing in some rounds)
@@ -250,12 +269,12 @@ if __name__ == "__main__":
     for i in range(len(rounds)):
         # print(f"=== ROUND {i+1} ===")
         round = rounds[i]
-        round.WeightEdges()
+        round.WeightEdges(algo_params=algo_params)
         # round.Print(print_edges=True)
         round_weights = [edge.weight for edge in round.edges]
         if len(set(round_weights)) == 1:
             even_round_numbers.append(i+1)
-        for game in round.Cull(numCourts=(num_courts if cull_num_courts else None)): # If numCourts is None, it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
+        for game in round.Cull(numCourts=(num_courts if algo_params.cull_num_courts else None)): # If numCourts is None, it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
             if num_courts == None or (games_added < num_courts * num_rounds): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
                 # game.Print()
                 scheddy.AddGame(game)
@@ -265,6 +284,6 @@ if __name__ == "__main__":
     scheddy.ExportHistoryCSV()
     scheddy.ExportScheduleCSV()
 
-    PrintStats(players_men + players_women, print_individuals=True, num_courts=num_courts, num_rounds=num_rounds, num_games=games_added, print_overall=True, csv_append=True)
+    PrintStats(players = players_men + players_women, algo_params=algo_params, print_individuals=True, num_courts=num_courts, num_rounds=num_rounds, num_games=games_added, print_overall=True, csv_append=True)
 
     print("Done")
