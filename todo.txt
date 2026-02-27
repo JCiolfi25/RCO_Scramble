@@ -1,13 +1,14 @@
-CONCEPTS:
-- Need to add some way to make additional repetitons worse; for example, would much rather play M2 2x and M3 2x than play M2 3x and M3 1x
+CURRENT ISSUES:
+- If there are excess courts (eg num courts > total players/4), then schedule printer will put the same team into multiple courts per round; ie, fills all courts every round
+    - 4 total players, 12 rounds, 4 courts -> results in fill all courts for 3 rounds then stopping bc that places all 12 games
 
-- Teammate history should be weighted as least as heavily as opponent history, for cases when some teams get skipped due to odd numbers or limited courts
-- Past number of games played should likely be given even higher weighting than repeating players on the court
+
+CONCEPTS:
 - Should same-gender opponent repeating be weighted differently than cross-gender opponent repeat?
 
 TACTICAL TODO:
-- Have stats printout also save to CSV, appending stats as well as NumMen/Women, num rounds, and num courts
 - Test for Num Men != Num Women
+x Have stats printout also save to CSV, appending stats as well as NumMen/Women, num rounds, and num courts
 x Create and implement "weighting coefficients" variables with the other variables, for repeat opponents, repeat teammates, and number of games played
 x Create "update stats" function in Player that goes through and calculates num games, num repeat same gender opponents, repeat diff gender opponents, and repeat teammates
 x Create Stats function for the schedule that will generate overall stats (min/max/avg)
@@ -27,3 +28,30 @@ Need to review algorithm and trial-and-error different algorithm handles, to get
 - Small Num Rounds
 - Small Num Courts
 
+
+IDEAS:
+- Make cull_num_courts True unless number of courts is 1 or None? (I guess irrelevant if num_courts is None bc will never cull)
+- Try running with eg 3 courts when num of teams only allows for single court, see if it breaks
+
+
+AI prompting for data analysis:
+Please analyze this workbook to give me insights.  The primary KPI is to minimize Games Played Range, then to minimize the maximum Repeat Teammates and Repeat Opponents.
+
+The algorithm levers I can use to accomplish this are Cull Num Courts and the different weights.
+I would like to find algorithm settings that work great regardless of the number of rounds, number of courts (may be an integer or Unlimited), or number of players.
+Therefore, please treat each environment (rounds × courts × players) as a separate “scenario,” pick the lexicographic best setting(s) in each scenario, and then look for weight settings that win across all scenarios.
+
+Analysis so far:
+For 4-6 num of each gender and 1-2 courts, with rounds 3-20:
+    opp history weights should be non-zero but tiny, with 1 or 100 being close behind
+    teammate history weights should be 1, with 100 essentially the same; can't be zero
+    games played weight should be 100; as minimizing range of games played across players is primary goal, max this weight
+    cull num courts should be false; if the rounds is an "even" number then this is irrelevant, otherwise it helps. Could get dicey scheduling-wise tho, as based on number of teams and courts, could mean a team is assigned to two simultaneous games...
+For 2-4 num of each gender and 1 court, with rounds 3-20:
+    cull num courts should be false; making True means worst-case GPR will be 2 instead of 1 (although shouldn't it just always be False if courts=1?)
+    opp history weight and teammate history weight should be low but non-zero
+    games played weight should be higher
+For 2-11 num of each gender (equal), 1/2/10/Unlimited courts, 12 rounds:
+    and CullNumCourts either True or False (but treated as False if num_courts=1 or unlimited):
+        Optimal is high GamePlayedWeight, medium RepeatTeammateWeight, small RepeatOpponentWeight;
+        Equivalent for CullNumCourts True/False (likely due to num_courts=1 treating CullNumCourts as False)
