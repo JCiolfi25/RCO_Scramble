@@ -271,13 +271,22 @@ def GenerateTeamsByRound(num_rounds, players_men, players_women):
         rounds_all_teams: A list of lists of teams, where each inner list represents the teams for a round.
     """
     rounds_all_teams = list()
+    n_len = max(len(players_men), len(players_women))
+    # Pad the shorter list with None (byes) so rotation works for unequal counts
+    men_list = players_men.copy()
+    women_list = players_women.copy()
+    while len(men_list) < n_len:
+        men_list.append(None)
+    while len(women_list) < n_len:
+        women_list.append(None)
+
     for r in range(num_rounds):
-        n_len = len(players_men)
-        # Rotate women to create unique partners
-        rotated_women = players_women[r%n_len:] + players_women[:r%n_len]
+        rotated_women = women_list[r % n_len:] + women_list[:r % n_len]
         next_round_teams = list()
-        for team in (zip(players_men, rotated_women)):
-            next_round_teams.append(Team(*team))
+        for m, w in zip(men_list, rotated_women):
+            if m is None or w is None:
+                continue  # bye for the unmatched player
+            next_round_teams.append(Team(m, w))
         rounds_all_teams.append(next_round_teams)
     return rounds_all_teams
 
@@ -332,7 +341,8 @@ def Main(algo_params, num_rounds, num_courts, num_men, num_women=None):
 
     PrintStats(players = players_men + players_women, algo_params=algo_params, num_games = len(scheddy.games), num_courts=num_courts, num_rounds=num_rounds, csv_append=True, print_overall=False, print_individuals=False)
 
-if __name__ == "__main__":
+
+def SweepTest():
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100, cull_num_courts=True) # This appears to be the best combo; note cull_num_courts treated as False for num_courts=1 or None
     # Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
     total_runs = 0
@@ -368,3 +378,15 @@ if __name__ == "__main__":
     #     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
     #     total_runs += 1
     print(f"Total runs: {total_runs}")
+
+
+if __name__ == "__main__":
+    num_men = 4
+    num_women = 2
+    num_rounds = max(num_men, num_women)
+    players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
+    rounds_all_teams = GenerateTeamsByRound(num_rounds=num_rounds, players_men=players_men, players_women=players_women)
+    for round in rounds_all_teams:
+        print("Round:")
+        for team in round:
+            print(f"  {team.player1.name} & {team.player2.name}")
