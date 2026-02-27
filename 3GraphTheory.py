@@ -214,33 +214,40 @@ def PrintStats(players, algo_params, num_rounds=None, num_courts=None, num_games
             stats = [datetime.now(), num_rounds, num_courts, num_men, num_women, num_games, min(list_repeat_opponents_nums), max(list_repeat_opponents_nums), sum(list_repeat_opponents_nums)/len(list_repeat_opponents_nums), min(list_repeat_teammates_nums), max(list_repeat_teammates_nums), sum(list_repeat_teammates_nums)/len(list_repeat_teammates_nums), min(list_games_played_nums), max(list_games_played_nums), sum(list_games_played_nums)/len(list_games_played_nums)]
             algo = [algo_params.cull_num_courts, algo_params.repeat_exponential, algo_params.opponent_history_weight, algo_params.teammate_history_weight, algo_params.games_played_weight]
             writer.writerow(stats + algo)
-if __name__ == "__main__":
-        
-    # repeat_exponential = 2 
-    # opponent_history_weight = 1 
-    # teammate_history_weight = 0.001
-    # games_played_weight = 10 
 
+def GeneratePlayers(num_men, num_women=None):
+    """Generates the players based on number of men and women
 
-    # cull_num_courts = True 
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=0.001, games_played_weight=10, cull_num_courts=True)
-    algo_params.Print()
-    n = 5 # Number of men and also number of women
-    num_rounds= 12
-    num_courts = 2 # Set to None for unlimited courts (i.e. as many games as possible per round without repeating teams); set to specific number for that many courts (i.e. that many games per round, which may result in some teams not playing in some rounds)
+    Args:
+        num_men (int): The number of men to generate.
+        num_women (int, optional): The number of women to generate. If not given, will default to num_men
+
+    Returns:
+        players_men, players_women: (list players, list players): The generated men and women players.
+    """
+    if num_women is None:
+        num_women = num_men
     players_men = list()
-    for i in range(n):
+    for i in range(num_men):
         players_men.append(Player(f"M{i+1}"))
         players_men[i].is_man = True
     players_women = list()
-    for i in range(n):
+    for i in range(num_women):
         players_women.append(Player(f"W{i+1}"))
         players_women[i].is_man = False
+    return players_men, players_women
 
-    # print(players_men)
-    # print(players_women)
-    # print("================================")
+def GenerateTeamsByRound(num_rounds, players_men, players_women):
+    """Generates teams by round deterministically. Requires N rounds to ensure that each player has played with every other player of the opposite gender at least once, where N is equal to greater of num_men or num_women
 
+    Args:
+        num_rounds (int): The number of rounds to generate teams for.
+        players_men (list of players): The list of men players.
+        players_women (list of players): The list of women players.
+
+    Returns:
+        rounds_all_teams: A list of lists of teams, where each inner list represents the teams for a round.
+    """
     rounds_all_teams = list()
     for r in range(num_rounds):
         n_len = len(players_men)
@@ -250,16 +257,22 @@ if __name__ == "__main__":
         for team in (zip(players_men, rotated_women)):
             next_round_teams.append(Team(*team))
         rounds_all_teams.append(next_round_teams)
+    return rounds_all_teams
 
-    # num_teams = 0
-    # for i in range(len(rounds_all_teams)):
-    #     round = rounds_all_teams[i]
-    #     for team in round:
-    #         num_teams += 1
-            # team.Print()
-        # print("")
-    # print(num_teams)
-    
+def GenerateSchedule(rounds_all_teams, algo_params, num_courts=None, num_rounds_sched=None):
+    """Generates the schedule based on the teams for each round and the algorithm parameters
+
+    Args:
+        rounds_all_teams (list of lists of teams): A list of lists of teams, where each inner list represents the teams for a round.
+        algo_params (AlgoParams): The parameters for the pairing algorithm used to choose games per round.
+        num_courts (int, optional): The number of courts available for scheduling games. If not given, will default to None, which means unlimited courts (i.e. as many games as possible per round without repeating teams).
+        num_rounds_sched (int, optional): The number of rounds to generate the schedule for. If not given, will default to None, which means it will generate for all rounds in rounds_all_teams.
+
+    Returns:
+        scheddy: The generated Schedule object containing the scheduled games.
+    """
+    if num_rounds_sched is None:
+        num_rounds_sched = len(rounds_all_teams)
     rounds=list()
     for round in rounds_all_teams:
         rounds.append(Round(round))
@@ -275,15 +288,27 @@ if __name__ == "__main__":
         if len(set(round_weights)) == 1:
             even_round_numbers.append(i+1)
         for game in round.Cull(numCourts=(num_courts if algo_params.cull_num_courts else None)): # If numCourts is None, it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
-            if num_courts == None or (games_added < num_courts * num_rounds): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
+            if num_courts == None or (games_added < num_courts * num_rounds_sched): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
                 # game.Print()
                 scheddy.AddGame(game)
                 games_added += 1
-    # scheddy.Print()
-    # print(even_round_numbers)
+    return scheddy
+
+def Main(num_rounds, num_courts, algo_params, num_men, num_women=None):
+    players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
+    rounds_all_teams = GenerateTeamsByRound(num_rounds=num_rounds, players_men=players_men, players_women=players_women)
+    
+    scheddy = GenerateSchedule(num_rounds_sched = num_rounds, num_courts = num_courts, rounds_all_teams=rounds_all_teams, algo_params=algo_params)
     scheddy.ExportHistoryCSV()
     scheddy.ExportScheduleCSV()
 
-    PrintStats(players = players_men + players_women, algo_params=algo_params, print_individuals=True, num_courts=num_courts, num_rounds=num_rounds, num_games=games_added, print_overall=True, csv_append=True)
+    PrintStats(players = players_men + players_women, algo_params=algo_params, print_individuals=False, num_courts=num_courts, num_rounds=num_rounds, print_overall=True, csv_append=True)
 
     print("Done")
+
+if __name__ == "__main__":
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=0.001, games_played_weight=10, cull_num_courts=True)
+    num_rounds= 12
+    num_courts = 2
+    Main(num_rounds=num_rounds, num_courts=num_courts, algo_params=algo_params, num_men=5)
+    
