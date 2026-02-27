@@ -353,9 +353,10 @@ if __name__ == "__main__":
     #                     algo_params_list.append(AlgoParams(repeat_exponential=repeat_exponential, opponent_history_weight=opponent_history_weight, teammate_history_weight=teammate_history_weight, games_played_weight=games_played_weight, cull_num_courts=cull_num_courts))
     # If this line is uncommented, it will only use this algo option:
     algo_params_list = [algo_params]
+    # algo_params_list = [AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100, cull_num_courts=True),AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100, cull_num_courts=False) ]
    
-    num_rounds_list = [12]
-    num_courts_list = [1,2,10,None]
+    num_rounds_list = range(1,17)
+    num_courts_list = [2]
     num_men_list = range(2, 11) 
     for num_rounds in num_rounds_list:
         for num_courts in num_courts_list:

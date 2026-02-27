@@ -5,9 +5,13 @@ CURRENT ISSUES:
 
 CONCEPTS:
 - Should same-gender opponent repeating be weighted differently than cross-gender opponent repeat?
+- When num_courts is fixed to 2 and num_rounds is fixed to 12, there will be some realistic numbers of players (men=women=7,8,10) where games_played_range = 2
+    - Need to do the math to determine the optimal number of rounds given number of players such that games_played_range = 0
 
 TACTICAL TODO:
-- Test for Num Men != Num Women
+- Test functionality for Num Men != Num Women
+- Test algorithm for Men!=Women
+- Current problem: can't get games_range to 0 for num_men=num_women=7 or 9 when num_courts=2 and num_rounds < 17; num_men=women=8 or 10 requires cull to be False
 x Have stats printout also save to CSV, appending stats as well as NumMen/Women, num rounds, and num courts
 x Create and implement "weighting coefficients" variables with the other variables, for repeat opponents, repeat teammates, and number of games played
 x Create "update stats" function in Player that goes through and calculates num games, num repeat same gender opponents, repeat diff gender opponents, and repeat teammates
@@ -24,9 +28,11 @@ Algorithm handles:
 
 Need to review algorithm and trial-and-error different algorithm handles, to get it to best handle all cases:
 - Num Men != Num Women
-- Num Men and/or Num Women being odd
-- Small Num Rounds
-- Small Num Courts
+- For all tested scenarios so far (which have always assumed men=women), this seems the best outcome:
+    - repeat teammate/opponent weight = 1
+    - total game count weight = 100
+    - cull_num_courts = True (needed for scheduling, algo treats as False if num_courts=1 or None)
+    - repeat_exponential should be 2 just because
 
 
 IDEAS:
