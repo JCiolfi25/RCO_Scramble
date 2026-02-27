@@ -77,14 +77,17 @@ class Round:
         self.isWeighted = False
         self.isCulled = False
         for teams in itertools.combinations(teams, 2):
-            self.edges.append(Edge(*teams, 0))
+            if len(set([teams[0].player1, teams[0].player2, teams[1].player1, teams[1].player2])) == 4: # Ensure no player is repeated in a single game
+                self.edges.append(Edge(*teams))
     def Print(self, print_edges=False):
         print("Round:")
         for team in self.teams:
-            team.Print()
+            # team.Print()
+            pass
         if print_edges:
             print("Edges:")
-            for edge in self.edges:
+            self.edges.sort(key=lambda e: e.weight)
+            for edge in self.edges:#.sort(key=lambda e: e.weight):
                 print(f"  {edge.team1.name} - {edge.team2.name}: {edge.weight}")
     def WeightEdges(self, algo_params):
         for edge in self.edges:
@@ -94,22 +97,21 @@ class Round:
         # Round.Cull() returns the list of games to be played this round, based on edge weights
         self.edges.sort(key=lambda e: e.weight)
         selected_games = list()
-        used_teams = set()
+        used_players = set()
         for edge in self.edges:
-            if edge.team1 not in used_teams and edge.team2 not in used_teams:
+            if edge.team1.player1 not in used_players and edge.team1.player2 not in used_players and edge.team2.player1 not in used_players and edge.team2.player2 not in used_players:
                 selected_games.append(Game(edge.team1, edge.team2))
-                used_teams.add(edge.team1)
-                used_teams.add(edge.team2)
+                used_players.update([edge.team1.player1, edge.team1.player2, edge.team2.player1, edge.team2.player2])
                 if len(selected_games) == numCourts: # if numCourts is unspecified and therefore None, this condition will never be true and it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
                     break
         self.isCulled = True
         return selected_games
 class Edge:
-    def __init__(self, team1, team2, weight):
+    def __init__(self, team1, team2):
         self.team1 = team1
         self.team2 = team2
-        self.weight = weight
     def WeightSelf(self, algo_params):
+        self.weight = 0
         # Calculate weight based on past interactions
         p1, p2 = self.team1.player1, self.team1.player2
         p3, p4 = self.team2.player1, self.team2.player2
@@ -259,6 +261,33 @@ def GeneratePlayers(num_men, num_women=None):
         players_women[i].is_man = False
     return players_men, players_women
 
+def GenerateAllTeamsList(players_men, players_women):
+    """Generate a list of all possible teams given list of men and list of women
+
+    Args:
+        players_men (list of players): The list of men players.
+        players_women (list of players): The list of women players.
+
+    Returns:
+        all_teams (list of teams): The list of all possible teams.
+    """
+    all_teams = list()
+    n_len = max(len(players_men), len(players_women))
+    # Pad the shorter list with None (byes) so rotation works for unequal counts
+    men_list = players_men.copy()
+    women_list = players_women.copy()
+    while len(men_list) < n_len:
+        men_list.append(None)
+    while len(women_list) < n_len:
+        women_list.append(None)
+
+    for r in range(n_len):
+        rotated_women = women_list[r % n_len:] + women_list[:r % n_len]
+        for m, w in zip(men_list, rotated_women):
+            if m is None or w is None:
+                continue  # bye for the unmatched player
+            all_teams.append(Team(m, w))
+    return all_teams
 def GenerateTeamsByRound(num_rounds, players_men, players_women):
     """Generates teams by round deterministically. Requires N rounds to ensure that each player has played with every other player of the opposite gender at least once, where N is equal to greater of num_men or num_women
 
@@ -290,37 +319,30 @@ def GenerateTeamsByRound(num_rounds, players_men, players_women):
         rounds_all_teams.append(next_round_teams)
     return rounds_all_teams
 
-def GenerateSchedule(rounds_all_teams, algo_params, num_courts=None, num_rounds_sched=None):
+def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=None):
     """Generates the schedule based on the teams for each round and the algorithm parameters
 
     Args:
-        rounds_all_teams (list of lists of teams): A list of lists of teams, where each inner list represents the teams for a round.
+        all_teams_list (lists of teams): A list of all possible teams given the players
         algo_params (AlgoParams): The parameters for the pairing algorithm used to choose games per round.
+        num_rounds_sched (int): The number of rounds to generate the schedule for
         num_courts (int, optional): The number of courts available for scheduling games. If not given, will default to None, which means unlimited courts (i.e. as many games as possible per round without repeating teams).
-        num_rounds_sched (int, optional): The number of rounds to generate the schedule for. If not given, will default to None, which means it will generate for all rounds in rounds_all_teams.
 
     Returns:
         scheddy: The generated Schedule object containing the scheduled games.
     """
-    if num_rounds_sched is None:
-        num_rounds_sched = len(rounds_all_teams)
-    rounds=list()
-    for round in rounds_all_teams:
-        rounds.append(Round(round))
     scheddy = Schedule(numCourts=num_courts)
-    even_round_numbers = list() #???
+    # return scheddy
+    master_round = Round(all_teams_list) # "Master Round" with all possible teams; weighting should cause teams to work out
     games_added = 0
-    for i in range(len(rounds)):
-        # print(f"=== ROUND {i+1} ===")
-        round = rounds[i]
-        round.WeightEdges(algo_params=algo_params)
-        # round.Print(print_edges=True)
-        round_weights = [edge.weight for edge in round.edges]
-        if len(set(round_weights)) == 1:
-            even_round_numbers.append(i+1)
-        for game in round.Cull(numCourts=(num_courts if ((num_courts and num_courts > 1) and (algo_params.cull_num_courts)) else None)): # If numCourts is None or 1, it will select as many games as possible without repeating teams; if numCourts is specified and !1, it will select that many games
+    for i in range(num_rounds_sched):
+        master_round.WeightEdges(algo_params=algo_params) #re-weight the edges between rounds
+        if i+1 ==5: master_round.Print(print_edges=True)
+        selected_games = master_round.Cull(numCourts=num_courts) #num_courts is the simultaneous number of games to be played
+        for game in selected_games: 
             if num_courts == None or (games_added < num_courts * num_rounds_sched): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
-                # game.Print()
+                print(f"Round {i+1}")
+                game.Print()
                 scheddy.AddGame(game)
                 games_added += 1
     return scheddy
@@ -333,9 +355,12 @@ def Main(algo_params, num_rounds, num_courts, num_men, num_women=None, print_ove
     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
 '''
     players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
-    rounds_all_teams = GenerateTeamsByRound(num_rounds=num_rounds, players_men=players_men, players_women=players_women)
+
+    # rounds_all_teams = GenerateTeamsByRound(num_rounds=num_rounds, players_men=players_men, players_women=players_women) #??? Change for switching to flat representation
+    # scheddy = GenerateSchedule(num_rounds_sched = num_rounds, num_courts = num_courts, rounds_all_teams=rounds_all_teams, algo_params=algo_params)
+    all_teams_list = GenerateAllTeamsList(players_men=players_men, players_women=players_women)
+    scheddy = GenerateSchedule(num_rounds_sched = num_rounds, num_courts = num_courts, all_teams_list=all_teams_list, algo_params=algo_params)
     
-    scheddy = GenerateSchedule(num_rounds_sched = num_rounds, num_courts = num_courts, rounds_all_teams=rounds_all_teams, algo_params=algo_params)
     scheddy.ExportHistoryCSV()
     scheddy.ExportScheduleCSV()
 
@@ -382,6 +407,10 @@ def SweepTest():
 
 
 if __name__ == "__main__":
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=.1, teammate_history_weight=10, games_played_weight=100, cull_num_courts=False) # This appears to be the best combo; note cull_num_courts treated as False for num_courts=1 or None
-    Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=8, print_overall=True, print_individuals=True)
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, 
+                             cull_num_courts=False) # This appears to be the best combo; note cull_num_courts treated as False for num_courts=1 or None
+    Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=6, print_overall=True, print_individuals=False)
+    # all_teams = GenerateAllTeamsList(*GeneratePlayers(2,3))
+    # for team in all_teams:
+    #     team.Print()
     print("Done")
