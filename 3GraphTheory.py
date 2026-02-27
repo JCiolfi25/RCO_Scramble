@@ -409,7 +409,7 @@ def SweepTest():
 if __name__ == "__main__":
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, 
                              cull_num_courts=False) # This appears to be the best combo; note cull_num_courts treated as False for num_courts=1 or None
-    Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=6, print_overall=True, print_individuals=False)
+    Main(algo_params=algo_params, num_rounds=7, num_courts=1, num_men=7, print_overall=True, print_individuals=False)
     # all_teams = GenerateAllTeamsList(*GeneratePlayers(2,3))
     # for team in all_teams:
     #     team.Print()
