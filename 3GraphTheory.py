@@ -14,7 +14,7 @@ from datetime import datetime
 
 class AlgoParams:
     """Holds algorithm parameters.
-    For minimizing games played range, then minimizing Max RepeatTeammates and Max RepeatOpponents, seems best to set games_played weight high and other two weights low/moderate
+    For minimizing games played range, then minimizing Max RepeatTeammates (to maximize chance you play with everyone), then Max RepeatOpponents, seems best to set games_played weight high, then repeat teammate, then repeat opponent
         Cull_num_courts effectively doesn't matter bc was only detriment when num_courts=1, and in that case it's just treated as false anyway
     """
     def __init__(self, repeat_exponential, opponent_history_weight, teammate_history_weight, games_played_weight, cull_num_courts):
@@ -325,7 +325,7 @@ def GenerateSchedule(rounds_all_teams, algo_params, num_courts=None, num_rounds_
                 games_added += 1
     return scheddy
 
-def Main(algo_params, num_rounds, num_courts, num_men, num_women=None):
+def Main(algo_params, num_rounds, num_courts, num_men, num_women=None, print_overall=False, print_individuals=False):
     '''
     Main function to generate the schedule and print stats
     Example usage:
@@ -339,7 +339,7 @@ def Main(algo_params, num_rounds, num_courts, num_men, num_women=None):
     scheddy.ExportHistoryCSV()
     scheddy.ExportScheduleCSV()
 
-    PrintStats(players = players_men + players_women, algo_params=algo_params, num_games = len(scheddy.games), num_courts=num_courts, num_rounds=num_rounds, csv_append=True, print_overall=False, print_individuals=False)
+    PrintStats(players = players_men + players_women, algo_params=algo_params, num_games = len(scheddy.games), num_courts=num_courts, num_rounds=num_rounds, csv_append=True, print_overall=print_overall, print_individuals=print_individuals)
 
 
 def SweepTest():
@@ -371,9 +371,10 @@ def SweepTest():
     for num_rounds in num_rounds_list:
         for num_courts in num_courts_list:
             for num_men in num_men_list:
-                 for alg_params in algo_params_list:
-                    Main(algo_params=alg_params, num_rounds=num_rounds, num_courts=num_courts, num_men=num_men)
-                    total_runs += 1
+                 for num_women in [num_men -2, num_men -1, num_men, num_men+1, num_men+2]: # Assuming number of men is equal to number men +-2
+                    for alg_params in algo_params_list:
+                        Main(algo_params=alg_params, num_rounds=num_rounds, num_courts=num_courts, num_men=num_men, num_women=num_women)
+                        total_runs += 1
     # for algo_params in algo_params_list:
     #     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
     #     total_runs += 1
@@ -381,12 +382,6 @@ def SweepTest():
 
 
 if __name__ == "__main__":
-    num_men = 4
-    num_women = 2
-    num_rounds = max(num_men, num_women)
-    players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
-    rounds_all_teams = GenerateTeamsByRound(num_rounds=num_rounds, players_men=players_men, players_women=players_women)
-    for round in rounds_all_teams:
-        print("Round:")
-        for team in round:
-            print(f"  {team.player1.name} & {team.player2.name}")
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=.1, teammate_history_weight=10, games_played_weight=100, cull_num_courts=False) # This appears to be the best combo; note cull_num_courts treated as False for num_courts=1 or None
+    Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=8, print_overall=True, print_individuals=True)
+    print("Done")
