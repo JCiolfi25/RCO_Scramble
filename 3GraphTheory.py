@@ -355,9 +355,9 @@ if __name__ == "__main__":
     algo_params_list = [algo_params]
     # algo_params_list = [AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100, cull_num_courts=True),AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100, cull_num_courts=False) ]
    
-    num_rounds_list = range(1,17)
-    num_courts_list = [2]
-    num_men_list = range(2, 11) 
+    num_rounds_list = range(1,35)
+    num_courts_list = [1]
+    num_men_list = range(4, 11) 
     for num_rounds in num_rounds_list:
         for num_courts in num_courts_list:
             for num_men in num_men_list:
