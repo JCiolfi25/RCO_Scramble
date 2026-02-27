@@ -302,7 +302,7 @@ def Main(num_rounds, num_courts, algo_params, num_men, num_women=None):
     scheddy.ExportHistoryCSV()
     scheddy.ExportScheduleCSV()
 
-    PrintStats(players = players_men + players_women, algo_params=algo_params, print_individuals=False, num_courts=num_courts, num_rounds=num_rounds, print_overall=True, csv_append=True)
+    PrintStats(players = players_men + players_women, algo_params=algo_params, print_individuals=False, num_games = len(scheddy.games), num_courts=num_courts, num_rounds=num_rounds, print_overall=True, csv_append=True)
 
     print("Done")
 
@@ -311,4 +311,3 @@ if __name__ == "__main__":
     num_rounds= 12
     num_courts = 2
     Main(num_rounds=num_rounds, num_courts=num_courts, algo_params=algo_params, num_men=5)
-    
