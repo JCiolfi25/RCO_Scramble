@@ -16,7 +16,7 @@ class AlgoParams:
     """Holds algorithm parameters.
     For minimizing games played range, then minimizing Max RepeatTeammates (to maximize chance you play with everyone), then Max RepeatOpponents, seems best to set games_played weight high, then repeat teammate, then repeat opponent
     """
-    def __init__(self, repeat_exponential, opponent_history_weight, teammate_history_weight, games_played_weight):
+    def __init__(self, repeat_exponential, opponent_history_weight, teammate_history_weight, games_played_weight, recent_rounds_weight):
         self.repeat_exponential = repeat_exponential # Exponent applied to number of repeats when calculating edge weights, to make further repeats heavier; can be adjusted to make the algorithm more or less averse to repeats
         # Generally just leaving at 2; somewhat difficult to get stats on as this would be what I'd use to calculate the stats, so it's be a bit nepotistic
         self.opponent_history_weight = opponent_history_weight # Weight added to edge for each time a player in a team on the edge has already played against that opponent (non-reciprocal)
@@ -24,6 +24,7 @@ class AlgoParams:
         self.games_played_weight = games_played_weight # Weight added to edge for each game a player in a team on the edge has played (tracked as number of past teammates), to encourage more even distribution of games played among players
         # Note games_played_weight is essentially multiplied by 4 because it's counted per player
         # This should still be the highest weight, as the most important thing is balancing the number of games played per person
+        self.recent_rounds_weight = recent_rounds_weight # weight added to edge per player * max(rounds_played), as tiebreaker
 
     def Print(self):
         print(f"Algorithm Parameters:")
@@ -37,6 +38,7 @@ class Player:
         self.is_man = None
         self.past_teammates = list()  
         self.past_opponents = list()
+        self.rounds_played = list() # Track which rounds players have played in, used in weighting to avoid long repeat sits or plays
         self.repeat_teammates = 0
         self.repeat_opponents = 0
         self.games_played = 0
@@ -119,6 +121,7 @@ class Edge:
         # For each game a player has played (tracked as number of past teammates), add games_played_weight to the weight to encourage more even distribution of games played among players
         for p in [p1, p2, p3, p4]:
             self.weight += algo_params.games_played_weight * len(p.past_teammates)
+            self.weight += algo_params.recent_rounds_weight * max(p.rounds_played) if p.rounds_played else 0 # add highest round number played * recent_rounds_weight per player; tiebreaker
 class Game:
     def __init__(self, team1, team2):
         self.team1 = team1
@@ -129,11 +132,13 @@ class Schedule:
     def __init__(self, numCourts=None):
         self.games=list()
         self.numCourts = numCourts
-    def AddGame(self, game):
+    def AddGame(self, game, round_number=None):
         # Schedule.AddGame(game) also updates the relevant players' past teammates and opponents lists
         self.games.append(game)
         # Update past teammates and opponents for each player in the game
         (P1, P2, P3, P4) = (game.team1.player1, game.team1.player2, game.team2.player1, game.team2.player2)
+        for p in [P1, P2, P3, P4]:
+            if round_number: p.rounds_played.append(round_number) 
         P1.past_teammates.append(P2)
         P1.past_opponents.extend([P3, P4])
         P1.UpdateStats()
@@ -203,8 +208,11 @@ def PrintStats(players, algo_params, num_rounds=None, num_courts=None, num_games
         list_games_played_nums.append(player.games_played)
         if print_individuals: 
             player.Print(include_history=True, include_stats=True)
+    games_played_men = [p.games_played for p in players if p.is_man]
+    games_played_women = [p.games_played for p in players if not p.is_man]
     if print_overall:
-        print("")
+        print(f"Games played range, men: {max(games_played_men) - min(games_played_men)}")
+        print(f"Games played range, women: {max(games_played_women) - min(games_played_women)}")
         print("Repeat Opponents per player Overall:\n\tMin: \t{},\n\tMax: \t{},\n\tAvg: \t{},\n\tRng: \t{}".format(min(list_repeat_opponents_nums), max(list_repeat_opponents_nums), sum(list_repeat_opponents_nums)/len(list_repeat_opponents_nums), max(list_repeat_opponents_nums)-min(list_repeat_opponents_nums)))
         print("Repeat Teammates per player Overall:\n\tMin: \t{},\n\tMax: \t{},\n\tAvg: \t{},\n\tRng: \t{}".format(min(list_repeat_teammates_nums), max(list_repeat_teammates_nums), sum(list_repeat_teammates_nums)/len(list_repeat_teammates_nums), max(list_repeat_teammates_nums)-min(list_repeat_teammates_nums)))
         print("Games Played per player Overall:\n\tMin: \t{},\n\tMax: \t{},\n\tAvg: \t{},\n\tRng: \t{}".format(min(list_games_played_nums), max(list_games_played_nums), sum(list_games_played_nums)/len(list_games_played_nums), max(list_games_played_nums)-min(list_games_played_nums)))
@@ -220,15 +228,15 @@ def PrintStats(players, algo_params, num_rounds=None, num_courts=None, num_games
                 writer.writerow(["Timestamp", "Num Rounds", "Num Courts", "Num Men", "Num Women", "Num Games", 
                                  "Repeat Opponents Min", "Repeat Opponents Max", "Repeat Opponents Avg", "Repeat Opponents Rng",
                                  "Repeat Teammates Min", "Repeat Teammates Max", "Repeat Teammates Avg", "Repeat Teammates Rng",
-                                 "Games Played Min", "Games Played Max", "Games Played Avg", "Games Played Rng",
-                                 "Repeat Exponential", "Opponent History Weight", "Teammate History Weight", "Games Played Weight"])
+                                 "Games Played Min", "Games Played Max", "Games Played Avg", "Games Played Rng Men", "Games played Rng Women",
+                                 "Repeat Exponential", "Opponent History Weight", "Teammate History Weight", "Games Played Weight", "Recent Rounds Weight"])
         with open("tournament_stats.csv", mode="a", newline="") as file:
             writer = csv.writer(file)
             stats = [datetime.now(), num_rounds, num_courts, num_men, num_women, num_games, 
                      min(list_repeat_opponents_nums), max(list_repeat_opponents_nums), sum(list_repeat_opponents_nums)/len(list_repeat_opponents_nums), max(list_repeat_opponents_nums)-min(list_repeat_opponents_nums),
                      min(list_repeat_teammates_nums), max(list_repeat_teammates_nums), sum(list_repeat_teammates_nums)/len(list_repeat_teammates_nums), max(list_repeat_teammates_nums)-min(list_repeat_teammates_nums),
-                     min(list_games_played_nums), max(list_games_played_nums), sum(list_games_played_nums)/len(list_games_played_nums), max(list_games_played_nums)-min(list_games_played_nums)]
-            algo = [algo_params.repeat_exponential, algo_params.opponent_history_weight, algo_params.teammate_history_weight, algo_params.games_played_weight]
+                     min(list_games_played_nums), max(list_games_played_nums), sum(list_games_played_nums)/len(list_games_played_nums), max(games_played_men) - min(games_played_men), max(games_played_women) - min(games_played_women)]
+            algo = [algo_params.repeat_exponential, algo_params.opponent_history_weight, algo_params.teammate_history_weight, algo_params.games_played_weight, algo_params.recent_rounds_weight]
             writer.writerow(stats + algo)
 
 def GeneratePlayers(num_men, num_women=None):
@@ -311,7 +319,7 @@ def GenerateTeamsByRound(num_rounds, players_men, players_women):
         rounds_all_teams.append(next_round_teams)
     return rounds_all_teams
 
-def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=None):
+def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=None, verbose=False):
     """Generates the schedule based on the teams for each round and the algorithm parameters
 
     Args:
@@ -329,13 +337,14 @@ def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=N
     games_added = 0
     for i in range(num_rounds_sched):
         master_round.WeightEdges(algo_params=algo_params) #re-weight the edges between rounds
-        if i+1 ==5: master_round.Print(print_edges=True)
+        # if i+1 ==5: master_round.Print(print_edges=True)
         selected_games = master_round.Cull(numCourts=num_courts) #num_courts is the simultaneous number of games to be played
         for game in selected_games: 
             if num_courts == None or (games_added < num_courts * num_rounds_sched): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
-                print(f"Round {i+1}")
-                game.Print()
-                scheddy.AddGame(game)
+                if verbose:
+                    print(f"Round {i+1}")
+                    game.Print()
+                scheddy.AddGame(game, round_number=i+1)
                 games_added += 1
     return scheddy
 
@@ -343,7 +352,7 @@ def Main(algo_params, num_rounds, num_courts, num_men, num_women=None, print_ove
     '''
     Main function to generate the schedule and print stats
     Example usage:
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=0.001, games_played_weight=10)
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=0.001, games_played_weight=10, recent_rounds_weight=0.001)
     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
 '''
     players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
@@ -360,45 +369,49 @@ def Main(algo_params, num_rounds, num_courts, num_men, num_women=None, print_ove
 
 
 def SweepTest():
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100) # This appears to be the best combo;
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=0.0001)# This appears to be the best combo;
     # Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
     total_runs = 0
 
     # repeat_exponentials = [2] # Varying this doesn't impact stats bc stats don't weight further repeats differently
-    # opponent_history_weights = [0, 0.001, 1, 25, 100]
+    # opponent_history_weights = [0.00001, 1, 25, 100]
     # teammate_history_weights = opponent_history_weights
     # games_played_weights = opponent_history_weights
+    # recent_rounds_weights = opponent_history_weights
     
     # algo_params_list = list()
     # for repeat_exponential in repeat_exponentials:
     #     for opponent_history_weight in opponent_history_weights:
     #         for teammate_history_weight in teammate_history_weights:
     #             for games_played_weight in games_played_weights:
-#                     algo_params_list.append(AlgoParams(repeat_exponential=repeat_exponential, opponent_history_weight=opponent_history_weight, teammate_history_weight=teammate_history_weight, games_played_weight=games_played_weight))
+    #                 for recent_rounds_weight in recent_rounds_weights:
+    #                     algo_params_list.append(AlgoParams(repeat_exponential=repeat_exponential, opponent_history_weight=opponent_history_weight, teammate_history_weight=teammate_history_weight, games_played_weight=games_played_weight, recent_rounds_weight=recent_rounds_weight))
     # If this line is uncommented, it will only use this algo option:
     algo_params_list = [algo_params]
-    # algo_params_list = [AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100),AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100)]
+    print(f"Total algo parameter combinations: {len(algo_params_list)}")
    
-    num_rounds_list = range(1,35)
+    num_rounds_list = range(2,43)
     num_courts_list = [1]
-    num_men_list = range(4, 11) 
+    num_men_list = range(2,11) 
+    print("Total Main param combos {}".format(len(num_rounds_list) * len(num_courts_list) * len(num_men_list)))
     for num_rounds in num_rounds_list:
         for num_courts in num_courts_list:
             for num_men in num_men_list:
-                 for num_women in [num_men -2, num_men -1, num_men, num_men+1, num_men+2]: # Assuming number of men is equal to number men +-2
-                    for alg_params in algo_params_list:
-                        Main(algo_params=alg_params, num_rounds=num_rounds, num_courts=num_courts, num_men=num_men, num_women=num_women)
-                        total_runs += 1
+                #  for num_women in [num_men -2, num_men -1, num_men, num_men+1, num_men+2]: # Assuming number of men is equal to number men +-2
+                for alg_params in algo_params_list:
+                    Main(algo_params=alg_params, num_rounds=num_rounds, num_courts=num_courts, num_men=num_men, num_women=num_men)
+                    total_runs += 1
+
     # for algo_params in algo_params_list:
     #     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
+    #     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=6)
+    #     Main(algo_params=algo_params, num_rounds=10, num_courts=2, num_men=6)
     #     total_runs += 1
     print(f"Total runs: {total_runs}")
 
 
 if __name__ == "__main__":
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100) # This appears to be the best combo
-    Main(algo_params=algo_params, num_rounds=7, num_courts=1, num_men=7, print_overall=True, print_individuals=False)
-    # all_teams = GenerateAllTeamsList(*GeneratePlayers(2,3))
-    # for team in all_teams:
-    #     team.Print()
+    # algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
+    # Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=7, print_overall=True, print_individuals=False)
+    SweepTest()
     print("Done")
