@@ -15,9 +15,8 @@ from datetime import datetime
 class AlgoParams:
     """Holds algorithm parameters.
     For minimizing games played range, then minimizing Max RepeatTeammates (to maximize chance you play with everyone), then Max RepeatOpponents, seems best to set games_played weight high, then repeat teammate, then repeat opponent
-        Cull_num_courts effectively doesn't matter bc was only detriment when num_courts=1, and in that case it's just treated as false anyway
     """
-    def __init__(self, repeat_exponential, opponent_history_weight, teammate_history_weight, games_played_weight, cull_num_courts):
+    def __init__(self, repeat_exponential, opponent_history_weight, teammate_history_weight, games_played_weight):
         self.repeat_exponential = repeat_exponential # Exponent applied to number of repeats when calculating edge weights, to make further repeats heavier; can be adjusted to make the algorithm more or less averse to repeats
         # Generally just leaving at 2; somewhat difficult to get stats on as this would be what I'd use to calculate the stats, so it's be a bit nepotistic
         self.opponent_history_weight = opponent_history_weight # Weight added to edge for each time a player in a team on the edge has already played against that opponent (non-reciprocal)
@@ -26,19 +25,12 @@ class AlgoParams:
         # Note games_played_weight is essentially multiplied by 4 because it's counted per player
         # This should still be the highest weight, as the most important thing is balancing the number of games played per person
 
-        self.cull_num_courts = cull_num_courts
-        # if true, Round.Cull() will be passed numCourts to select that many games with lowest weights; 
-        # if false, Round.Cull() will select as many games as possible without repeating teams and all games will be passed into the schedule (games that don't fit will pass to next round)
-        # Balance appears better when False, allowing court-number-limited games to just be played the next round; 
-        # HOWEVER Could get dicey scheduling-wise if false, as based on number of teams and courts, could mean a team is assigned to two simultaneous games... (one from prior round carry-over, and one from current round)
-
     def Print(self):
         print(f"Algorithm Parameters:")
         print(f"  Repeat Exponential: {self.repeat_exponential}")
         print(f"  Opponent History Weight: {self.opponent_history_weight}")
         print(f"  Teammate History Weight: {self.teammate_history_weight}")
         print(f"  Games Played Weight: {self.games_played_weight}")
-        print(f"  Cull Num Courts: {self.cull_num_courts}")
 class Player:
     def __init__(self, name):
         self.name = name
@@ -229,14 +221,14 @@ def PrintStats(players, algo_params, num_rounds=None, num_courts=None, num_games
                                  "Repeat Opponents Min", "Repeat Opponents Max", "Repeat Opponents Avg", "Repeat Opponents Rng",
                                  "Repeat Teammates Min", "Repeat Teammates Max", "Repeat Teammates Avg", "Repeat Teammates Rng",
                                  "Games Played Min", "Games Played Max", "Games Played Avg", "Games Played Rng",
-                                 "Cull Num Courts", "Repeat Exponential", "Opponent History Weight", "Teammate History Weight", "Games Played Weight"])
+                                 "Repeat Exponential", "Opponent History Weight", "Teammate History Weight", "Games Played Weight"])
         with open("tournament_stats.csv", mode="a", newline="") as file:
             writer = csv.writer(file)
             stats = [datetime.now(), num_rounds, num_courts, num_men, num_women, num_games, 
                      min(list_repeat_opponents_nums), max(list_repeat_opponents_nums), sum(list_repeat_opponents_nums)/len(list_repeat_opponents_nums), max(list_repeat_opponents_nums)-min(list_repeat_opponents_nums),
                      min(list_repeat_teammates_nums), max(list_repeat_teammates_nums), sum(list_repeat_teammates_nums)/len(list_repeat_teammates_nums), max(list_repeat_teammates_nums)-min(list_repeat_teammates_nums),
                      min(list_games_played_nums), max(list_games_played_nums), sum(list_games_played_nums)/len(list_games_played_nums), max(list_games_played_nums)-min(list_games_played_nums)]
-            algo = [algo_params.cull_num_courts, algo_params.repeat_exponential, algo_params.opponent_history_weight, algo_params.teammate_history_weight, algo_params.games_played_weight]
+            algo = [algo_params.repeat_exponential, algo_params.opponent_history_weight, algo_params.teammate_history_weight, algo_params.games_played_weight]
             writer.writerow(stats + algo)
 
 def GeneratePlayers(num_men, num_women=None):
@@ -351,7 +343,7 @@ def Main(algo_params, num_rounds, num_courts, num_men, num_women=None, print_ove
     '''
     Main function to generate the schedule and print stats
     Example usage:
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=0.001, games_played_weight=10, cull_num_courts=True)
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=0.001, games_played_weight=10)
     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
 '''
     players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
@@ -368,13 +360,11 @@ def Main(algo_params, num_rounds, num_courts, num_men, num_women=None, print_ove
 
 
 def SweepTest():
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100, cull_num_courts=True) # This appears to be the best combo; note cull_num_courts treated as False for num_courts=1 or None
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100) # This appears to be the best combo;
     # Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
     total_runs = 0
 
     # repeat_exponentials = [2] # Varying this doesn't impact stats bc stats don't weight further repeats differently
-    # cull_num_courts_options = [True,False] # stats are better if False, but could get dicey scheduling-wise if False as could mean a team is assigned to two simultaneous games... (one from prior round carry-over, and one from current round)
-    # # Note cull_num_Courts is treated as False when num_Courts=1 or None
     # opponent_history_weights = [0, 0.001, 1, 25, 100]
     # teammate_history_weights = opponent_history_weights
     # games_played_weights = opponent_history_weights
@@ -384,11 +374,10 @@ def SweepTest():
     #     for opponent_history_weight in opponent_history_weights:
     #         for teammate_history_weight in teammate_history_weights:
     #             for games_played_weight in games_played_weights:
-    #                 for cull_num_courts in cull_num_courts_options:
-    #                     algo_params_list.append(AlgoParams(repeat_exponential=repeat_exponential, opponent_history_weight=opponent_history_weight, teammate_history_weight=teammate_history_weight, games_played_weight=games_played_weight, cull_num_courts=cull_num_courts))
+#                     algo_params_list.append(AlgoParams(repeat_exponential=repeat_exponential, opponent_history_weight=opponent_history_weight, teammate_history_weight=teammate_history_weight, games_played_weight=games_played_weight))
     # If this line is uncommented, it will only use this algo option:
     algo_params_list = [algo_params]
-    # algo_params_list = [AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100, cull_num_courts=True),AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100, cull_num_courts=False) ]
+    # algo_params_list = [AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100),AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=1, games_played_weight=100)]
    
     num_rounds_list = range(1,35)
     num_courts_list = [1]
@@ -407,8 +396,7 @@ def SweepTest():
 
 
 if __name__ == "__main__":
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, 
-                             cull_num_courts=False) # This appears to be the best combo; note cull_num_courts treated as False for num_courts=1 or None
+    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100) # This appears to be the best combo
     Main(algo_params=algo_params, num_rounds=7, num_courts=1, num_men=7, print_overall=True, print_individuals=False)
     # all_teams = GenerateAllTeamsList(*GeneratePlayers(2,3))
     # for team in all_teams:
