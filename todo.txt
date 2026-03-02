@@ -18,13 +18,16 @@ CONCEPTS:
     min(num_games) = LCM(num_men/2, num_women/2); every that many games will be even
 
 TACTICAL TODO:
-- Sweep updated flat algorithm parameters/weights
-- Sweep optimized (men=women=range(2,11), num_courts=2, num_rounds=range(4,19)) to see how it comes out
+- Verify that if played eg 10.5 rounds for 7=men=women, can just play 10 2-court rounds then drop the second court on the last round and it's optimal (print weighting for last round, confirm there's a standout?)
+- Update stats to log num_men and num_women separatly
 - Test flat algorithm for Men!=Women
+- Create "optimal" for num_men = range(2,11), num_women = num_men +-1, and total points ~= 180 (12 rounds to 15); rounds could be 11, 15, 21, 25, 30, 42 (meaning could be 4 to 16 rounds, realistically)
+    - Result would be a grip with / populated; men across side, women across top, and men=women+-1 populated; per grid squad would be RoundsxPoints (eg 12x15pts, or 10.5x15; 0.5 means last round plays 1 game)
 - General code cleanup, now that is flattened (eg remove comments and references to cull_num_Courts)
 - Merge back to dev
 - Merge back to Main
-- Create "optimal" for num_men = range(2,11), num_women = num_men +-1, and total points ~= 180 (12 rounds to 15); rounds could be 11, 15, 21, 25, 30, 42 (meaning could be 4 to 16 rounds, realistically)
+x Sweep updated flat algorithm parameters/weights
+x Sweep optimized (men=women=range(2,11), num_courts=2, num_rounds=range(4,19)) to see how it comes out
 x have PrintStats print GameRng differentiated between men and women
 x Current problem: can't get games_range to 0 for num_men=num_women=7 or 9 when num_courts=2 and num_rounds < 17; num_men=women=8 or 10 requires cull to be False
     ONCE CHANGED TO FLAT SINGLE-ALL-TEAM-ROUND, it seems to work!!! Assuming numbers are sensical; eg if num_men=women=7, then games_range=0 for total 7 games, 14 games, 21 games, etc;
