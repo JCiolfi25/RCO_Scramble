@@ -15,7 +15,7 @@ def home():
     return_str = r"""Simple tourney scheduler. Visit /TourneyTest/num to 
     generate a 12 round, 2 court RCO scramble schedule with num men and num women.
     Visit /TourneyTest/courts/rounds/num to generate court Courts, round Rounds schedule
-    with num men and num wome."""
+    with num men and num women."""
     return return_str
 
 @app.route('/hello')
@@ -38,6 +38,11 @@ def TourneyTest(num_men):
 @app.route('/TourneyTest/<int:courts>/<int:rounds>/<int:num_each_gender>')
 def TourneyTest(courts, rounds, num_each_gender):
     scheddy = GraphTheory.Main(courts=courts, rounds=rounds, num_each_gender=num_each_gender)
+    return scheddy.ReturnHTMLSchedule()
+
+@app.route('/TourneyTest/<int:courts>/<int:rounds>/<int:num_men>/<int:num_women>')
+def TourneyTest(courts, rounds, num_men, num_women):
+    scheddy = GraphTheory.Main(courts=courts, rounds=rounds, num_men=num_men, num_women=num_women)
     return scheddy.ReturnHTMLSchedule()
 
 # headers = ["Name", "Age", "City"]
