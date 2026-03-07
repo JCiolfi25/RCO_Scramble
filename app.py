@@ -1,12 +1,19 @@
 # Flask app
 from flask import Flask, request
 from markupsafe import escape
+from html_table_writer import write_html_table
+import GraphTheory
 
 app = Flask(__name__)
 
 @app.route('/')
 def hello():
-    return 'Hello, World!'
+    return "Hello, World!"
+
+@app.route('/home')
+def home():
+    return_str = r"Simple tourney scheduler. Visit /TourneyTest/num to generate a 12 round, 2 court RCO scramble schedule with num men and num women."
+    return return_str
 
 @app.route('/hello')
 #http://127.0.0.1:5000/hello?name=John
@@ -19,3 +26,12 @@ def hello_name():
 #http://127.0.0.1:5000/int/55
 def do_math(num):
     return f"The square of {num} is {num**2}!"
+
+@app.route('/TourneyTest/<int:num_men>')
+def TourneyTest(num_men):
+    scheddy = GraphTheory.Main(num_men=num_men)
+    return scheddy.ReturnHTMLSchedule()
+
+# headers = ["Name", "Age", "City"]
+# rows = [["Alice", 30, "Boston"], ["Bob", 27, "Chicago"]]
+# html_str = write_html_table("report.html", headers, rows, title="Employee Report")
