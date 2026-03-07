@@ -18,9 +18,9 @@ TACTICAL TODO:
     - Result would be a grip with / populated; men across side, women across top, and men=women+-1 populated; per grid squad would be RoundsxPoints (eg 12x15pts, or 10.5x15; 0.5 means last round plays 1 game)
 - General code cleanup, now that is flattened (eg remove comments and references to cull_num_Courts)
 - implement ability to generate fractional number of rounds (eg if 2 courts and ask for 10.5 rounds, generate 10 2-court rounds and 1 1-court round)
-- Merge back to dev
-- Merge back to Main
 - Create webpage to allow internet webpage access; either host python script somewhere, or convert to Javascript and use Github live webpages
+x Merge back to dev
+x Merge back to Main
 x Sweep updated flat algorithm parameters/weights
 x Sweep optimized (men=women=range(2,11), num_courts=2, num_rounds=range(4,19)) to see how it comes out
 x have PrintStats print GameRng differentiated between men and women
