@@ -193,8 +193,7 @@ class Schedule:
                     row = list([game_num//self.numCourts + 1])
                 game_num += 1
             if len(row) > 1:
-                # writer.writerow(row)    
-                raise NotImplementedError
+                rows.append(row)
             if header and rows:
                 return write_html_table(headers=header, rows=rows, title="Tournament Schedule")
     def ExportScheduleCSV(self, filename="tournament_schedule.csv"):

@@ -12,10 +12,19 @@ def hello():
 
 @app.route('/home')
 def home():
-    return_str = r"""Simple tourney scheduler. Visit /TourneyTest/num to 
-    generate a 12 round, 2 court RCO scramble schedule with num men and num women.
+    return_str = """Simple tourney scheduler. Visit /TourneyTest/num to 
+    generate a 12 round, 2 court RCO scramble schedule with num men and num women;
+    for 2 courts, 12 rounds, 3 men, and 3 women:\n
+    https://rco-scramble.onrender.com/TourneyTest/3
+\n
     Visit /TourneyTest/courts/rounds/num to generate court Courts, round Rounds schedule
-    with num men and num women."""
+    with num men and num women;
+    For 2 courts, 10 rounds, 6 men, and 6 women:
+    https://rco-scramble.onrender.com/TourneyTest/2/10/6
+    
+    Or /TourneyTest/courts/rounds/num_men/num_women to specify more parameters;
+    for 1 court, 12 rounds, 3 men, 2 women:
+    https://rco-scramble.onrender.com/TourneyTest/1/12/3/2"""
     return return_str
 
 @app.route('/hello')
@@ -30,19 +39,19 @@ def hello_name():
 def do_math(num):
     return f"The square of {num} is {num**2}!"
 
-@app.route('/TourneyTest/<int:num_men>')
-def TourneyTest(num_men):
-    scheddy = GraphTheory.Main(num_men=num_men)
+@app.route('/TourneyTest/<int:num_each_gender>')
+def TourneyTestGendersMatch(num_each_gender):
+    scheddy = GraphTheory.Main(num_men=num_each_gender)
     return scheddy.ReturnHTMLSchedule()
 
 @app.route('/TourneyTest/<int:courts>/<int:rounds>/<int:num_each_gender>')
-def TourneyTest(courts, rounds, num_each_gender):
-    scheddy = GraphTheory.Main(courts=courts, rounds=rounds, num_each_gender=num_each_gender)
+def TourneyTestCourtsRoundsGendersMatch(courts, rounds, num_each_gender):
+    scheddy = GraphTheory.Main(num_courts=courts, num_rounds=rounds, num_men=num_each_gender)
     return scheddy.ReturnHTMLSchedule()
 
 @app.route('/TourneyTest/<int:courts>/<int:rounds>/<int:num_men>/<int:num_women>')
-def TourneyTest(courts, rounds, num_men, num_women):
-    scheddy = GraphTheory.Main(courts=courts, rounds=rounds, num_men=num_men, num_women=num_women)
+def TourneyTestCourtsRoundsMenWomen(courts, rounds, num_men, num_women):
+    scheddy = GraphTheory.Main(num_courts=courts, num_rounds=rounds, num_men=num_men, num_women=num_women)
     return scheddy.ReturnHTMLSchedule()
 
 # headers = ["Name", "Age", "City"]
