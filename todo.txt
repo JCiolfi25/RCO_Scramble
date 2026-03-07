@@ -1,15 +1,8 @@
 CURRENT ISSUES:
 - Printing issue: If there are excess courts (eg num courts > total players/4), then schedule printer will put the same team into multiple courts per round; ie, fills all courts every round
     - 4 total players, 12 rounds, 4 courts -> results in fill all courts for 3 rounds then stopping bc that places all 12 games
-- When num_courts is fixed to 2 and num_rounds is fixed to 12, there will be some realistic numbers of players (men=women=7,8,10) where games_played_range = 2
-    - Need to do the math to determine the optimal number of rounds given number of players such that games_played_range = 0
-    -FIXED, now the range is just sensical (if rounds*courts*4 is evenly divisible by num_men and num_women, game_rng within gender will be zero)
+
     
-To fix extra games getting dropped and some team pairings therefore being skipped, this branch (dev_flat-rounds) is going to create a single graph with all possible team pairings.  
-To generate a round, that graph will be weighted and return num_courts games.  Then for the next round, that same graph will be re-weighted, and again return num_courts games.
-    This worked!!
-
-
 CONCEPTS:
 - Should same-gender opponent repeating be weighted differently than cross-gender opponent repeat?
 - To let this be flexible to number of teams, instead of Team.Player1 and Team.Player2 it should be Team.Players = [Player1, Player2]
@@ -24,8 +17,10 @@ TACTICAL TODO:
 - Create "optimal" for num_men = range(2,11), num_women = num_men +-1, and total points ~= 180 (12 rounds to 15); rounds could be 11, 15, 21, 25, 30, 42 (meaning could be 4 to 16 rounds, realistically)
     - Result would be a grip with / populated; men across side, women across top, and men=women+-1 populated; per grid squad would be RoundsxPoints (eg 12x15pts, or 10.5x15; 0.5 means last round plays 1 game)
 - General code cleanup, now that is flattened (eg remove comments and references to cull_num_Courts)
+- implement ability to generate fractional number of rounds (eg if 2 courts and ask for 10.5 rounds, generate 10 2-court rounds and 1 1-court round)
 - Merge back to dev
 - Merge back to Main
+- Create webpage to allow internet webpage access; either host python script somewhere, or convert to Javascript and use Github live webpages
 x Sweep updated flat algorithm parameters/weights
 x Sweep optimized (men=women=range(2,11), num_courts=2, num_rounds=range(4,19)) to see how it comes out
 x have PrintStats print GameRng differentiated between men and women
