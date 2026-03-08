@@ -337,7 +337,8 @@ def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=N
     games_added = 0
     for i in range(num_rounds_sched):
         master_round.WeightEdges(algo_params=algo_params) #re-weight the edges between rounds
-        # if i+1 ==5: master_round.Print(print_edges=True)
+        if i+1 ==7: 
+            master_round.Print(print_edges=True)
         selected_games = master_round.Cull(numCourts=num_courts) #num_courts is the simultaneous number of games to be played
         for game in selected_games: 
             if num_courts == None or (games_added < num_courts * num_rounds_sched): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
@@ -415,7 +416,7 @@ def SweepTest():
 
 
 if __name__ == "__main__":
-    algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
-    Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=False)
+    # algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
+    Main(algo_params=None, num_rounds=9, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=False)
     # SweepTest()
     print("Done")
