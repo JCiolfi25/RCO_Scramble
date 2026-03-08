@@ -348,13 +348,15 @@ def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=N
                 games_added += 1
     return scheddy
 
-def Main(algo_params, num_rounds, num_courts, num_men, num_women=None, print_overall=False, print_individuals=False):
+def Main(algo_params=None, num_rounds=12, num_courts=2, num_men=3, num_women=None, save_csvs=False, print_overall=False, print_individuals=False):
     '''
     Main function to generate the schedule and print stats
     Example usage:
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=0.001, games_played_weight=10, recent_rounds_weight=0.001)
     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
 '''
+    if algo_params is None:
+        algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=0.0001)
     players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
 
     # rounds_all_teams = GenerateTeamsByRound(num_rounds=num_rounds, players_men=players_men, players_women=players_women) #??? Change for switching to flat representation
@@ -362,10 +364,12 @@ def Main(algo_params, num_rounds, num_courts, num_men, num_women=None, print_ove
     all_teams_list = GenerateAllTeamsList(players_men=players_men, players_women=players_women)
     scheddy = GenerateSchedule(num_rounds_sched = num_rounds, num_courts = num_courts, all_teams_list=all_teams_list, algo_params=algo_params)
     
-    scheddy.ExportHistoryCSV()
-    scheddy.ExportScheduleCSV()
+    if save_csvs:
+        scheddy.ExportHistoryCSV()
+        scheddy.ExportScheduleCSV()
 
-    PrintStats(players = players_men + players_women, algo_params=algo_params, num_games = len(scheddy.games), num_courts=num_courts, num_rounds=num_rounds, csv_append=True, print_overall=print_overall, print_individuals=print_individuals)
+    if print_overall: PrintStats(players = players_men + players_women, algo_params=algo_params, num_games = len(scheddy.games), num_courts=num_courts, num_rounds=num_rounds, csv_append=True, print_overall=print_overall, print_individuals=print_individuals)
+    return scheddy
 
 
 def SweepTest():
@@ -399,19 +403,19 @@ def SweepTest():
             for num_men in num_men_list:
                 #  for num_women in [num_men -2, num_men -1, num_men, num_men+1, num_men+2]: # Assuming number of men is equal to number men +-2
                 for alg_params in algo_params_list:
-                    Main(algo_params=alg_params, num_rounds=num_rounds, num_courts=num_courts, num_men=num_men, num_women=num_men)
+                    Main(algo_params=alg_params, num_rounds=num_rounds, num_courts=num_courts, num_men=num_men, num_women=num_men, save_csvs=True)
                     total_runs += 1
 
     # for algo_params in algo_params_list:
-    #     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5)
-    #     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=6)
-    #     Main(algo_params=algo_params, num_rounds=10, num_courts=2, num_men=6)
+    #     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=5, save_csvs=True)
+    #     Main(algo_params=algo_params, num_rounds=12, num_courts=2, num_men=6, save_csvs=True)
+    #     Main(algo_params=algo_params, num_rounds=10, num_courts=2, num_men=6, save_csvs=True)
     #     total_runs += 1
     print(f"Total runs: {total_runs}")
 
 
 if __name__ == "__main__":
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
-    Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, print_overall=True, print_individuals=False)
+    Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=False)
     # SweepTest()
     print("Done")
