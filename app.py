@@ -24,7 +24,11 @@ def home():
     
     Or /TourneyTest/courts/rounds/num_men/num_women to specify more parameters;
     for 1 court, 12 rounds, 3 men, 2 women:
-    https://rco-scramble.onrender.com/TourneyTest/1/12/3/2"""
+    https://rco-scramble.onrender.com/TourneyTest/1/12/3/2
+    
+    if num_gender=num_men=num_women, and num_games*2 // num_gender = 0,
+    then everyone will play the same number of games
+    """
     return return_str
 
 @app.route('/hello')
