@@ -10,7 +10,14 @@ CONCEPTS:
     num_games*2 // num_gender = 0, for both men and women
     min(num_games) = LCM(num_men/2, num_women/2); every that many games will be even
 
+
+WEBPAGE TODOS:
+- Create usable landing page
+    - Link tree? HTML input form?
+
 TACTICAL TODO:
+- Add "Off" column to schedule per round
+- Make schedule printable!
 - Verify that if played eg 10.5 rounds for 7=men=women, can just play 10 2-court rounds then drop the second court on the last round and it's optimal (print weighting for last round, confirm there's a standout?)
 - Update stats to log num_men and num_women separatly
 - Test flat algorithm for Men!=Women
