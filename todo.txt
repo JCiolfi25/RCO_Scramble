@@ -16,6 +16,8 @@ WEBPAGE TODOS:
     - Link tree? HTML input form?
 
 TACTICAL TODO:
+- Add "Off" column to schedule per round
+- Make schedule printable!
 - Verify that if played eg 10.5 rounds for 7=men=women, can just play 10 2-court rounds then drop the second court on the last round and it's optimal (print weighting for last round, confirm there's a standout?)
 - Update stats to log num_men and num_women separatly
 - Test flat algorithm for Men!=Women
