@@ -30,6 +30,32 @@ def home():
     </p>
     <hr>
     <h3>Custom Schedule Generator</h3>
+    <style>
+        /* Responsive form styling */
+        #tourneyForm {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            max-width: 600px;
+        }
+        #tourneyForm label, #tourneyForm select, #tourneyForm button {
+            font-size: 1em;
+        }
+        #tourneyForm label {
+            min-width: 60px;
+        }
+        @media (max-width: 600px) {
+            #tourneyForm {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            #tourneyForm label, #tourneyForm select, #tourneyForm button {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
     <form id="tourneyForm" onsubmit="event.preventDefault(); goToSchedule();">
         <label for="courts">Courts:</label>
         <select id="courts" name="courts">
@@ -48,6 +74,7 @@ def home():
             """ + "".join([f'<option value="{i}">{i}</option>' for i in range(2, 21)]) + """
         </select>
         <button type="submit">Go</button>
+        <div style="height: 60px;"></div>
     </form>
     <script>
         function goToSchedule() {
