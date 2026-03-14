@@ -445,6 +445,6 @@ def SweepTest():
 
 if __name__ == "__main__":
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
-    Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=False)
+    Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=True)
     # SweepTest()
     print("Done")
