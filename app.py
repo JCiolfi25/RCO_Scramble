@@ -1,5 +1,5 @@
 # Flask app
-from flask import Flask, request
+from flask import Flask, request, redirect, url_for
 from markupsafe import escape
 from html_table_writer import write_html_table
 import GraphTheory
@@ -62,6 +62,11 @@ def home():
     </script>
     """
     return return_html_str
+
+@app.errorhandler(404)
+# Redirect if someone tries to go to an invalid link
+def page_not_found(e):
+    return redirect(url_for('home'))
 
 @app.route('/hello')
 #http://127.0.0.1:5000/hello?name=John
