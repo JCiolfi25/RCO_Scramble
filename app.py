@@ -61,3 +61,5 @@ def TourneyTestCourtsRoundsMenWomen(courts, rounds, num_men, num_women):
 # headers = ["Name", "Age", "City"]
 # rows = [["Alice", 30, "Boston"], ["Bob", 27, "Chicago"]]
 # html_str = write_html_table("report.html", headers, rows, title="Employee Report")
+
+# To run, activate the .venv then run "flask run" in the terminal. Then visit http://127.0.0.1:5000
