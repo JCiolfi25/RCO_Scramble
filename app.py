@@ -119,11 +119,11 @@ def home():
         </ul>
         <p>Example: with 2 courts, 12 rounds, 6 men, 6 women:</p>
         <p>Total matches = 24; Total player-slots = 96; Total players = 12; Average games/player = 8.</p>
-        <p>Balance note: if men and women differ by &gt;1, exact equal game count may not be achievable, so fewer players may need to rotate or sit out to keep courts full.</p>
+        <p>Balance note: if men and women differ then exact equal game count between genders will not be achievable, this will become dramatically exagerated as the difference increases past 1.
+        In this case you may want to balance the gender distribution by having a man enter as a woman or vice versa.</p>
     </section>
     <p>
-        Note: If the number of men and the number of women is off from each other by more than ~1, the schedule will be a bit unbalanced.
-        In this case you may want to balance the gender distribtion by having a man enter as a woman or vise versa. <br><br>        
+        <br><br>        
         <em>Repo for this website and the scheduler algorithm it uses:
         <a href="https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed">https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed</a>
         </em>
