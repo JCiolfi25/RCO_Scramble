@@ -76,7 +76,54 @@ def home():
         <button type="submit">Go</button>
         <div style="height: 60px;"></div>
     </form>
+    <table style="border-collapse: collapse; width: 100%; max-width: 750px; margin-top: 1rem;">
+        <thead>
+            <tr>
+                <th style="border: 1px solid #ccc; padding: 8px; background: #f5f5f5; text-align: left;">Parameter</th>
+                <th style="border: 1px solid #ccc; padding: 8px; background: #f5f5f5; text-align: left;">Type</th>
+                <th style="border: 1px solid #ccc; padding: 8px; background: #f5f5f5; text-align: left;">Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid #ccc; padding: 8px;">courts</td>
+                <td style="border: 1px solid #ccc; padding: 8px;">integer</td>
+                <td style="border: 1px solid #ccc; padding: 8px;">Number of courts to schedule games on (1-5).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ccc; padding: 8px;">rounds</td>
+                <td style="border: 1px solid #ccc; padding: 8px;">integer</td>
+                <td style="border: 1px solid #ccc; padding: 8px;">Number of rounds to generate (1-100).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ccc; padding: 8px;">men</td>
+                <td style="border: 1px solid #ccc; padding: 8px;">integer</td>
+                <td style="border: 1px solid #ccc; padding: 8px;">Number of male players (2-20).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid #ccc; padding: 8px;">women</td>
+                <td style="border: 1px solid #ccc; padding: 8px;">integer</td>
+                <td style="border: 1px solid #ccc; padding: 8px;">Number of female players (2-20).</td>
+            </tr>
+        </tbody>
+    </table>
+    <section style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; max-width: 750px;">
+        <h4>Play count &amp; balance</h4>
+        <p>Use this quick calculator logic to understand expected number of games per player.</p>
+        <ul>
+            <li><strong>Total players</strong> = num_men + num_women</li>
+            <li><strong>Total matches</strong> = courts × rounds</li>
+            <li><strong>Spots per match</strong> = 4 (RCO scramble uses 4 players per game)</li>
+            <li><strong>Total player-slots</strong> = Total matches × Spots per match</li>
+            <li><strong>Average games per player</strong> = Total player-slots ÷ Total players</li>
+        </ul>
+        <p>Example: with 2 courts, 12 rounds, 6 men, 6 women:</p>
+        <p>Total matches = 24; Total player-slots = 96; Total players = 12; Average games/player = 8.</p>
+        <p>Balance note: if men and women differ by &gt;1, exact equal game count may not be achievable, so fewer players may need to rotate or sit out to keep courts full.</p>
+    </section>
     <p>
+        Note: If the number of men and the number of women is off from each other by more than ~1, the schedule will be a bit unbalanced.
+        In this case you may want to balance the gender distribtion by having a man enter as a woman or vise versa. <br><br>        
         <em>Repo for this website and the scheduler algorithm it uses:
         <a href="https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed">https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed</a>
         </em>
