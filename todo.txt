@@ -12,10 +12,10 @@ CONCEPTS:
 
 
 WEBPAGE TODOS:
-- Ask copilot for reformatting page suggestions (feed screenshot)
 - Check for schedule print formatting, add print button if needed
-- provide table of parameters (name/type/default/desc)
-- “Play count & balance” quick calculator + explanation (eg for X players on 2 courts, recommend Y rounds for balance)
+X Ask copilot for reformatting page suggestions (feed screenshot)
+x provide table of parameters (name/type/default/desc)
+x “Play count & balance” quick calculator + explanation (eg for X players on 2 courts, recommend Y rounds for balance)
 x add note that if number of men/women is off by more than +-1, may want to fix it another way (eg have a guy play as a woman) bc the numbers will be off; 8 men 4 women means the guys play in half the games, and the women never get an off
 x Add link to GitHub repo to the web page
 x ensure website gets hit without trailing slash 

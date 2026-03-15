@@ -52,10 +52,12 @@ def write_html_table(headers, rows, title):
         .home-btn:hover {{
           background: #005fa3;
         }}
+       
       </style>
     </head>
     <body>
-      <a href="/" class="home-btn">Home</a>
+      <a href="/" class="home-btn no-print">Home</a>
+       <button class="home-btn no-print" type="button" onclick="window.print()">Print</button>
       <table>
         <caption>{esc(title)}</caption>
         <thead>
@@ -74,6 +76,41 @@ def write_html_table(headers, rows, title):
     return_str += """
         </tbody>
       </table>
+
     </body>
+    <style>
+  @page {
+    size: auto;
+    margin: 12mm;
+  }
+  @media print {
+    body {
+      margin: 0;
+      color: #000;
+      background: #fff;
+    }
+    #tourneyForm, #calcWrapper, .no-print {
+      display: none !important;
+    }
+    table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      table-layout: fixed !important;
+    }
+    table th, table td {
+      border: 1px solid #444 !important;
+      padding: 8px !important;
+      font-size: 12px !important;
+    }
+    tr:nth-child(even) td {
+      background: #fff !important;
+    }
+    tr:hover td {
+      background: none !important;
+    }
+  }
+</style>
     </html>"""
     return return_str
