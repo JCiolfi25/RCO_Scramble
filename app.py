@@ -118,7 +118,8 @@ def home():
             <li><strong>Average games per player</strong> = Total player-slots ÷ Total players</li>
         </ul>
         <p>Example: with 2 courts, 12 rounds, 6 men, 6 women:</p>
-        <p>Total matches = 24; Total player-slots = 96; Total players = 12; Average games/player = 8.</p>
+        <p>Total matches = 24; Total player-slots = 96; Total players = 12; Total games per player = 8.<br>
+        Set total games per player equal to a multiple of the number of players per gender to have each player play with each teammate the same number of times.</p>
         <p>Balance note: if men and women differ then exact equal game count between genders will not be achievable, this will become dramatically exagerated as the difference increases past 1.
         In this case you may want to balance the gender distribution by having a man enter as a woman or vice versa.</p>
     </section>
