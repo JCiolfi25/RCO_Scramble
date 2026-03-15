@@ -118,8 +118,21 @@ def home():
             <li><strong>Average games per player</strong> = Total player-slots ÷ Total players</li>
         </ul>
         <p>Example: with 2 courts, 12 rounds, 6 men, 6 women:</p>
-        <p>Total matches = 24; Total player-slots = 96; Total players = 12; Total games per player = 8.<br>
-        Set total games per player equal to a multiple of the number of players per gender to have each player play with each teammate the same number of times.</p>
+        <p>Total matches = 24; Total player-slots = 96; Total players = 12; Total games per player = 8. Keep total games per player equal to the number of players per gender for even teammate distribution.</p>
+        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 520px; margin-top: 1rem;">
+            <strong>Quick calculator</strong><br>
+            <label for="calcPlayersPerGender">Players per gender:</label>
+            <select id="calcPlayersPerGender" style="width: 70px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}">{i}</option>' for i in range(1, 21)]) + """
+            </select>
+            <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
+            <select id="calcCourts" style="width: 50px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}">{i}</option>' for i in range(1, 6)]) + """
+            </select>
+            <button type="button" onclick="calcMinRounds()" style="margin-left: 8px;">Compute</button>
+            <p id="calcResult" style="margin-top: 0.5rem;">Minimum rounds needed: <strong>6</strong></p>
+            <p style="font-size: 0.9em; margin:2px 0;">This calculates the least rounds where each player plays equally and teammate pairings are balanced (equal genders assumed).</p>
+        </div>
         <p>Balance note: if men and women differ then exact equal game count between genders will not be achievable, this will become dramatically exagerated as the difference increases past 1.
         In this case you may want to balance the gender distribution by having a man enter as a woman or vice versa.</p>
     </section>
@@ -138,6 +151,33 @@ def home():
 
             // Use /TourneyGen/<courts>/<rounds>/<num_men>/<num_women>
             window.location.href = `/TourneyGen/${courts}/${rounds}/${men}/${women}`;
+        }
+
+        function calcMinRounds() {
+            var playersPerGender = parseInt(document.getElementById('calcPlayersPerGender').value, 10);
+            var courts = parseInt(document.getElementById('calcCourts').value, 10);
+            if (isNaN(playersPerGender) || playersPerGender < 2) {
+                document.getElementById('calcResult').innerHTML = 'Please select a valid number of players per gender (≥2).';
+                return;
+            }
+            if (isNaN(courts) || courts < 1) {
+                document.getElementById('calcResult').innerHTML = 'Please select a valid number of courts (≥1).';
+                return;
+            }
+
+            // goal: same games per player and same teammate distribution with equal genders
+            // games_per_player = (2 * courts * rounds) / playersPerGender
+            // require integer, and require at least playersPerGender rounds for teammate coverage
+            var rounds = playersPerGender;
+
+            // Ensure games_per_player integer
+            while ((2 * courts * rounds) % playersPerGender !== 0) {
+                rounds += 1;
+            }
+
+            document.getElementById('calcResult').innerHTML =
+                'Minimum rounds needed: <strong>' + rounds + '</strong> ' +
+                '(with ' + courts + ' courts and ' + (2 * playersPerGender) + ' total players).';
         }
     </script>
     """
