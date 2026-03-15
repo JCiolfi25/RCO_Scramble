@@ -6,7 +6,7 @@ import GraphTheory
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/',strict_slashes=False)
 def home():
     return_html_str = """
     <h2>Simple Tourney Scheduler</h2>
@@ -76,6 +76,11 @@ def home():
         <button type="submit">Go</button>
         <div style="height: 60px;"></div>
     </form>
+    <p>
+        <em>Repo for this website and the scheduler algorithm it uses:
+        <a href="https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed">https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed</a>
+        </em>
+    </p>
     <script>
         function goToSchedule() {
             var courts = document.getElementById('courts').value;

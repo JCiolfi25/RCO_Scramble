@@ -12,8 +12,13 @@ CONCEPTS:
 
 
 WEBPAGE TODOS:
-- Create usable landing page
-    - Link tree? HTML input form?
+x Add link to GitHub repo to the web page
+- Ask copilot for reformatting page suggestions (feed screenshot)
+x ensure website gets hit without trailing slash 
+- Check for schedule print formatting, add print button if needed
+x Update GitHub readme
+- Add note that if number of men/women is off by more than +-1, may want to fix it another way (eg have a guy play as a woman) bc the numbers will be off; 8 men 4 women means the guys play in half the games, and the women never get an off
+
 
 TACTICAL TODO:
 - Add "Off" column to schedule per round
