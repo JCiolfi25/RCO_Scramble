@@ -11,6 +11,7 @@ CONCEPTS:
     min(num_games) = LCM(num_men/2, num_women/2); every that many games will be even
 
 TODOS from 3-22-2026 tourney (Joel convo)
+- General code cleanup (remove unused/repeat/old code)
 - Add names as optional
 - Have calculator accept Men No. and Women No, and suggest round number
 - On Schedule add Played? checkbox that crosses out round
