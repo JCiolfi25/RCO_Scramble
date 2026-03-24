@@ -10,6 +10,15 @@ CONCEPTS:
     num_games*2 // num_gender = 0, for both men and women
     min(num_games) = LCM(num_men/2, num_women/2); every that many games will be even
 
+TODOS from 3-22-2026 tourney (Joel convo)
+- Add names as optional
+- Have calculator accept Men No. and Women No, and suggest round number
+- On Schedule add Played? checkbox that crosses out round
+- Have names included in a POST request, so multiple tourneys at once?
+- Give created toureny a key so anyone can go to page/KEY and it will pull up schedule WITH names
+- Move each game to its own line (with clear rounds break)
+    - Add Score Diff boxes to side of each team when printing
+- Create blank tourney doc (essentillay just "_____" for names)
 
 WEBPAGE TODOS:
 - Check for schedule print formatting, add print button if needed
