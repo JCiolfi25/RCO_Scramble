@@ -67,6 +67,31 @@ def home():
         <button type="submit">Go</button>
         <div style="height: 60px;"></div>
     </form>
+    <section style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; max-width: 750px;">
+        <h4>Play count &amp; balance</h4>
+        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 600px; margin-top: 1rem;">
+            <strong>Quick calculator</strong><br>
+            <label for="calcPlayersMen">Men:</label>
+            <select id="calcPlayersMen" style="width: 45px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 4 else ''}>{i}</option>' for i in range(2, 21)]) + """
+            </select>
+            <label for="calcPlayersWomen" style="margin-left: 12px;">Women:</label>
+            <select id="calcPlayersWomen" style="width: 45px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 6 else ''}>{i}</option>' for i in range(2, 21)]) + """
+            </select>
+            <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
+            <select id="calcCourts" style="width: 35px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 2 else ''}>{i}</option>' for i in range(1, 6)]) + """
+            </select>
+            <button type="button" onclick="calcMinRounds()" style="margin-left: 8px;">Compute</button>
+            <p id="calcResult" style="margin-top: 0.5rem;"></p>
+            <p style="font-size: 0.9em; margin:2px 0;">This calculates games per player per gender at the round numbers where every player within a gender plays the same number of games.
+            A fractional round number indicates you should use that fraction of the courts for the final round. EG: To play 12.5 rounds for 2 courts, use 12 2-court rounds and only one court for the final round.
+            If the genders are unbalanced, you can manually add in some single-gender games to help balance games between genders, or have a man enter thr tournement as a woman or vice versa.
+            For guideline on how many points to play to, divide total desired time (in minutes) by number of rounds to play (eg if you have 3 hours to play 12 rounds then play to 15 points, as 180 min/12 rounds = 15.</p>
+        </div>
+    </section>
+    <hr>
     <table style="border-collapse: collapse; width: 100%; max-width: 750px; margin-top: 1rem;">
         <thead>
             <tr>
@@ -98,36 +123,7 @@ def home():
             </tr>
         </tbody>
     </table>
-    <section style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; max-width: 750px;">
-        <h4>Play count &amp; balance</h4>
-        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 600px; margin-top: 1rem;">
-            <strong>Quick calculator</strong><br>
-            <label for="calcPlayersMen">Men:</label>
-            <select id="calcPlayersMen" style="width: 45px; margin-left: 6px;">
-                """ + "".join([f'<option value="{i}"{' selected' if i == 4 else ''}>{i}</option>' for i in range(2, 21)]) + """
-            </select>
-            <label for="calcPlayersWomen" style="margin-left: 12px;">Women:</label>
-            <select id="calcPlayersWomen" style="width: 45px; margin-left: 6px;">
-                """ + "".join([f'<option value="{i}"{' selected' if i == 6 else ''}>{i}</option>' for i in range(2, 21)]) + """
-            </select>
-            <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
-            <select id="calcCourts" style="width: 35px; margin-left: 6px;">
-                """ + "".join([f'<option value="{i}"{' selected' if i == 2 else ''}>{i}</option>' for i in range(1, 6)]) + """
-            </select>
-            <button type="button" onclick="calcMinRounds()" style="margin-left: 8px;">Compute</button>
-            <p id="calcResult" style="margin-top: 0.5rem;"></p>
-            <p style="font-size: 0.9em; margin:2px 0;">This calculates the minimum number of rounds where players within a gender all play the same number of games.
-            If output says to play a fraction of a round, use that fraction of the courts for the final round. EG: If the result is 12.5 rounds for 2 courts, use 12 2-court rounds and only one court for the final round.
-            If the minimum number of rounds is less than you want to play, scale up as desired by multiples of this minimum value. 
-            If the genders are unbalanced, you can manually add in some single-gender games to help balance games between genders.
-            For guideline on how many points to play to, divide total desired time (in minutes) by number of rounds to play (eg if you have 3 hours to play 12 rounds then play to 15 points, as 180 min/12 rounds = 15.</p>
-        </div>
-        <p>Balance note: if men and women differ then exact equal game count between genders will not be achievable, this will become dramatically exagerated as the difference increases past 1.
-        In this case you may want to balance the gender distribution by having a man enter as a woman or vice versa.</p>
-    </section>
-    <hr>
     <p>
-        <br><br>        
         <em>Repo for this website and the scheduler algorithm it uses:
         <a href="https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed">https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed</a>
         </em>
@@ -188,11 +184,33 @@ def home():
             }
             var minGamesMen = calcMinGamesHelper(playersMen);
             var minGamesWomen = calcMinGamesHelper(playersWomen);
-
             var minRounds = findMinRounds(minGamesMen, minGamesWomen, courts);
             document.getElementById('calcResult').innerHTML =
                 'Total rounds should be a multiple of <strong>' + minRounds + '</strong> ' +
                 '(Every ' + minRounds + ' rounds, each man plays ' + Math.round((2 * courts * minRounds) / playersMen) + ' games and each woman plays ' + Math.round((2 * courts * minRounds) / playersWomen) + ' games)';
+        
+            // Build table
+            var html = '<table border="1" cellpadding="6" style="border-collapse:collapse;text-align: center">';
+            html += '<tr><th>Rounds</th><th>Games per Man</th><th>Games per Woman</th></tr>';
+
+            // Generate 10 multiples (you can change this)
+            for (var i = 1; i <= 10; i++) {
+                var rounds = i * minRounds;
+                var gamesMen = Math.round((2 * courts * rounds) / playersMen);
+                var gamesWomen = Math.round((2 * courts * rounds) / playersWomen);
+
+                html += '<tr>' +
+                        '<td>' + rounds + '</td>' +
+                        '<td>' + gamesMen + '</td>' +
+                        '<td>' + gamesWomen + '</td>' +
+                        '</tr>';
+            }
+
+            html += '</table>';
+
+            document.getElementById('calcResult').innerHTML = html;
+
+        
         }
     </script>
     """

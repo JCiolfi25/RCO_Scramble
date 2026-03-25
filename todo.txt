@@ -13,8 +13,6 @@ CONCEPTS:
 TODOS from 3-22-2026 tourney (Joel convo)
 - Add "Print blank schedule" button that prints schedule with given Courts and Rounds but all names blank
     - Add note at bottom of page: "After each match, circle winning team and write score differential"
-- Have calculator output a table: Rounds, Games/Man, Games/Woman for the first 5 multiples
-    - then add intelligence; eg show all up to Rounds of 20
 - Have names included in a POST request, so multiple tourneys at once?
 - Give created toureny a key so anyone can go to page/KEY and it will pull up schedule WITH names
     - Key is important here because it lets a static QR code be dynamically assigned
@@ -26,6 +24,7 @@ TODOS from 3-22-2026 tourney (Joel convo)
 - On Schedule add Played? checkbox that crosses out round
 - Move each game to its own line (with clear rounds break)
     - Add Score Diff boxes to side of each team when printing
+x Have calculator output a table: Rounds, Games/Man, Games/Woman for the first 5 multiples
 x General code cleanup (remove unused/repeat/old code)
 x Add names as optional
 x Have calculator accept Men No. and Women No, and suggest round number
