@@ -52,10 +52,6 @@ def home():
         <select id="courts" name="courts">
             """ + "".join([f'<option value="{i}"{' selected' if i == 2 else ''}>{i}</option>' for i in range(1, 6)]) + """
         </select>
-        <label for="rounds">Rounds:</label>
-        <select id="rounds" name="rounds">
-            """ + "".join([f'<option value="{i}"{' selected' if i == 12 else ''}>{i}</option>' for i in range(1, 101)]) + """
-        </select>
         <label for="men">Men:</label>
         <select id="men" name="men">
             """ + "".join([f'<option value="{i}"{' selected' if i == 4 else ''}>{i}</option>' for i in range(2, 21)]) + """
@@ -64,6 +60,10 @@ def home():
         <select id="women" name="women">
             """ + "".join([f'<option value="{i}"{' selected' if i == 4 else ''}>{i}</option>' for i in range(2, 21)]) + """
         </select>
+        <label for="rounds">Rounds:</label>
+        <select id="rounds" name="rounds">
+            """ + "".join([f'<option value="{i}"{' selected' if i == 12 else ''}>{i}</option>' for i in range(1, 101)]) + """
+        </select>
         <button type="submit">Go</button>
         <div style="height: 60px;"></div>
     </form>
@@ -71,19 +71,19 @@ def home():
         <h4>Play count &amp; balance</h4>
         <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 600px; margin-top: 1rem;">
             <strong>Quick calculator</strong><br>
-            <label for="calcPlayersMen">Men:</label>
-            <select id="calcPlayersMen" style="width: 45px; margin-left: 6px;">
+            <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
+            <select id="calcCourts" style="width: 35px; margin-left: 4px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 2 else ''}>{i}</option>' for i in range(1, 6)]) + """
+            </select>
+            <label for="calcPlayersMen" style="margin-left: 12px;">Men:</label>
+            <select id="calcPlayersMen" style="width: 45px; margin-left: 4px;">
                 """ + "".join([f'<option value="{i}"{' selected' if i == 4 else ''}>{i}</option>' for i in range(2, 21)]) + """
             </select>
             <label for="calcPlayersWomen" style="margin-left: 12px;">Women:</label>
-            <select id="calcPlayersWomen" style="width: 45px; margin-left: 6px;">
+            <select id="calcPlayersWomen" style="width: 45px; margin-left: 4px;">
                 """ + "".join([f'<option value="{i}"{' selected' if i == 6 else ''}>{i}</option>' for i in range(2, 21)]) + """
             </select>
-            <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
-            <select id="calcCourts" style="width: 35px; margin-left: 6px;">
-                """ + "".join([f'<option value="{i}"{' selected' if i == 2 else ''}>{i}</option>' for i in range(1, 6)]) + """
-            </select>
-            <button type="button" onclick="calcMinRounds()" style="margin-left: 8px;">Compute</button>
+            <button type="button" onclick="calcMinRounds()" style="margin-left: 12px;">Compute</button>
             <p id="calcResult" style="margin-top: 0.5rem;"></p>
             <p style="font-size: 0.9em; margin:2px 0;">This calculates games per player per gender at the round numbers where every player within a gender plays the same number of games.
             A fractional round number indicates you should use that fraction of the courts for the final round. EG: To play 12.5 rounds for 2 courts, use 12 2-court rounds and only one court for the final round.
