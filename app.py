@@ -196,25 +196,19 @@ def home():
     """
     return return_html_str
 
-@app.errorhandler(404)
-# Redirect if someone tries to go to an invalid link
-def page_not_found(e):
-    return redirect(url_for('home'))
 
-
-@app.route('/hello')
-#http://127.0.0.1:5000/hello?name=John
-def hello_name():
-    name=request.args.get("name","Flask")
-    return f"Hello, {escape(name)}!"
-
-@app.route('/healthy')
-#http://127.0.0.1:5000/healthy
-def healthy():
-    return "Healthy!"
+@app.route('/TourneyGen/<int:courts>/<int:rounds>/<int:num_men>/<int:num_women>')
+def TourneyGenCourtsRoundsMenWomen(courts, rounds, num_men, num_women):
+# Target from /home Javascript; sets the globals and then rediirects to MakeTourney to get names entered
+    global g_num_men, g_num_women, g_courts, g_rounds
+    g_num_men = num_men
+    g_num_women = num_women
+    g_courts = courts
+    g_rounds = rounds
+    return redirect(url_for('EnterPlayerNames'))
 
 @app.route('/PlayerNames', methods=['GET', 'POST'], strict_slashes=False)
-#initializes tourney with given number of players
+# Allows entry of player names
 def EnterPlayerNames():
     global g_num_men, g_num_women, g_courts, g_rounds
     if g_num_men is None or g_num_women is None or g_courts is None or g_rounds is None:
@@ -245,7 +239,6 @@ def EnterPlayerNames():
             if not re.fullmatch(r'[A-Za-z0-9 _-]{1,32}', name):
                 return f"Invalid name for Man {i+1}: '{name}'. Only letters, numbers, spaces, underscores, and hyphens allowed. Max 32 characters."
             names_men.append(name)
-            # print(f"Man {i+1}: {name}") #???
         for i in range(g_num_women):
             name = request.form.get(f'woman_{i}')
             if name is None or len(name) == 0 or len(name.strip()) == 0:
@@ -254,44 +247,35 @@ def EnterPlayerNames():
             if not re.fullmatch(r'[A-Za-z0-9 _-]{1,32}', name):
                 return f"Invalid name for Woman {i+1}: '{name}'. Only letters, numbers, spaces, underscores, and hyphens allowed. Max 32 characters."
             names_women.append(name)
-            # print(f"Woman {i+1}: {name}") #???
 
     global g_names_men, g_names_women
     g_names_men = names_men
     g_names_women = names_women
     return redirect(url_for('TourneyGenNames'))
 
-
-@app.route('/TourneyGen/<int:courts>/<int:rounds>/<int:num_men>/<int:num_women>')
-def TourneyGenCourtsRoundsMenWomen(courts, rounds, num_men, num_women):
-    global g_num_men, g_num_women, g_courts, g_rounds
-# have this just set the globals and then rediirect to MakeTourney to get names entered
-    g_num_men = num_men
-    g_num_women = num_women
-    g_courts = courts
-    g_rounds = rounds
-    return redirect(url_for('EnterPlayerNames'))
-
 @app.route('/TourneyGenNames')
 def TourneyGenNames():
+    # Creates the actual tourney with the names provided from globals
     global g_names_men, g_names_women, g_courts, g_rounds
     if g_names_men is None or g_names_women is None or g_courts is None or g_rounds is None:
         return redirect(url_for('home'))
     scheddy = GraphTheory.Main(names_men=g_names_men, names_women=g_names_women, num_courts=g_courts, num_rounds=g_rounds)
     return scheddy.ReturnHTMLSchedule()
 
-# @app.route('/TourneyGen/<int:num_each_gender>')
-# def TourneyGenGendersMatch(num_each_gender):
-#     scheddy = GraphTheory.Main(num_men=num_each_gender)
-#     return scheddy.ReturnHTMLSchedule()
+@app.errorhandler(404)
+# Redirect if someone tries to go to an invalid link
+def page_not_found(e):
+    return redirect(url_for('home'))
 
-# @app.route('/TourneyGen/<int:courts>/<int:rounds>/<int:num_each_gender>')
-# def TourneyGenCourtsRoundsGendersMatch(courts, rounds, num_each_gender):
-#     scheddy = GraphTheory.Main(num_courts=courts, num_rounds=rounds, num_men=num_each_gender)
-#     return scheddy.ReturnHTMLSchedule()
+@app.route('/hello')
+#http://127.0.0.1:5000/hello?name=John
+def hello_name():
+    name=request.args.get("name","Flask")
+    return f"Hello, {escape(name)}!"
 
-# headers = ["Name", "Age", "City"]
-# rows = [["Alice", 30, "Boston"], ["Bob", 27, "Chicago"]]
-# html_str = write_html_table("report.html", headers, rows, title="Employee Report")
+@app.route('/healthy')
+#http://127.0.0.1:5000/healthy
+def healthy():
+    return "Healthy!"
 
 # To run, activate the .venv then run "flask run" in the terminal. Then visit http://127.0.0.1:5000
