@@ -14,6 +14,8 @@ TODOS from 3-22-2026 tourney (Joel convo)
 x General code cleanup (remove unused/repeat/old code)
 x Add names as optional
 x Have calculator accept Men No. and Women No, and suggest round number
+- fix "Courts" dropdown display in calculator to be in line
+- Add padding or text of some kind above or below the schedule so on phones you can zoom out and see the whole thing at once
 - Have calculator output a table: Rounds, Games/Man, Games/Woman for the first 5 multiples
     - then add intelligence; eg show all up to Rounds of 20 
 - On Schedule add Played? checkbox that crosses out round
