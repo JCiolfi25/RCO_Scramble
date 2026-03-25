@@ -1,4 +1,4 @@
-
+import flask
 def write_html_table(headers, rows, title):
     """Returns formatted HTML table from header and rows.
     Example usage:
@@ -58,6 +58,20 @@ def write_html_table(headers, rows, title):
     <body>
       <a href="/" class="home-btn no-print">Home</a>
        <button class="home-btn no-print" type="button" onclick="window.print()">Print</button>
+       <button class="home-btn no-print" type="button" onclick="printBlankSchedule()">Print Blank 2-Court Schedule</button>
+       
+    <script>
+    function printBlankSchedule() {{
+        const pdfUrl = "{flask.url_for('static', filename='Blank2Court16RoundSchedule.pdf')}";
+        const win = window.open(pdfUrl, "_blank");
+
+        win.onload = () => {{
+            win.focus();
+            win.print();
+        }};
+    }}
+    </script>
+
       <table>
         <caption>{esc(title)}</caption>
         <thead>
