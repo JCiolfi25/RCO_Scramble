@@ -268,6 +268,24 @@ def PrintStats(players, algo_params, num_rounds=None, num_courts=None, num_games
             algo = [algo_params.repeat_exponential, algo_params.opponent_history_weight, algo_params.teammate_history_weight, algo_params.games_played_weight, algo_params.recent_rounds_weight]
             writer.writerow(stats + algo)
 
+def GeneratePlayersFromNames(names_men, names_women):
+    """Generates players from lists of names
+
+    Args:
+        names_men (list of str): The list of names for men players.
+        names_women (list of str): The list of names for women players.
+
+    Returns:
+        players_men, players_women: (list players, list players): The generated men and women players.
+    """
+    players_men = [Player(name) for name in names_men]
+    for player in players_men:
+        player.is_man = True
+    players_women = [Player(name) for name in names_women]
+    for player in players_women:
+        player.is_man = False
+    return players_men, players_women
+
 def GeneratePlayers(num_men, num_women=None):
     """Generates the players based on number of men and women
 
@@ -377,7 +395,7 @@ def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=N
                 games_added += 1
     return scheddy
 
-def Main(algo_params=None, num_rounds=12, num_courts=2, num_men=3, num_women=None, save_csvs=False, print_overall=False, print_individuals=False):
+def Main(algo_params=None, names_men = None, names_women = None, num_rounds=12, num_courts=2, num_men=3, num_women=None, save_csvs=False, print_overall=False, print_individuals=False):
     '''
     Main function to generate the schedule and print stats
     Example usage:
@@ -386,7 +404,10 @@ def Main(algo_params=None, num_rounds=12, num_courts=2, num_men=3, num_women=Non
 '''
     if algo_params is None:
         algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=0.0001)
-    players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
+    if names_men is None or names_women is None:
+        players_men, players_women = GeneratePlayers(num_men, num_women) # if one number given, assumes that many men and that many women
+    else:
+        players_men, players_women = GeneratePlayersFromNames(names_men, names_women)
 
     # rounds_all_teams = GenerateTeamsByRound(num_rounds=num_rounds, players_men=players_men, players_women=players_women) #??? Change for switching to flat representation
     # scheddy = GenerateSchedule(num_rounds_sched = num_rounds, num_courts = num_courts, rounds_all_teams=rounds_all_teams, algo_params=algo_params)
@@ -445,6 +466,7 @@ def SweepTest():
 
 if __name__ == "__main__":
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
-    Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=True)
+    # Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=True)
+    Main(names_men=['John', 'Bob'], names_women=['Alice', 'Jane'], algo_params=algo_params, num_rounds=12, num_courts=1, save_csvs=True, print_overall=True, print_individuals=True)
     # SweepTest()
     print("Done")
