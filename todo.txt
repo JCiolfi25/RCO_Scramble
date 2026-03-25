@@ -10,12 +10,32 @@ CONCEPTS:
     num_games*2 // num_gender = 0, for both men and women
     min(num_games) = LCM(num_men/2, num_women/2); every that many games will be even
 
+TODOS from 3-22-2026 tourney (Joel convo)
+- Have names included in a POST request, so multiple tourneys at once?
+- Give created toureny a key so anyone can go to page/KEY and it will pull up schedule WITH names
+    - Key is important here because it lets a static QR code be dynamically assigned
+    - Maybe have server-side CSV, column per gender per tourney and row per name? 
+    - Key as secondary header, search most recent first?
+    - Create a landing "Viewer" page that just asks for you to enter key (or select from dropdown)
+- Add note at bottom of page: "After each match, circle winning team and write score differential"
+- Add padding or text of some kind above or below the schedule so on phones you can zoom out and see the whole thing at once
+- Add calculator and tourney gen support for single-gender scramble
+- On Schedule add Played? checkbox that crosses out round
+- Move each game to its own line (with clear rounds break)
+    - Add Score Diff boxes to side of each team when printing
+x Add "Print blank schedule" button that prints schedule with given Courts and Rounds but all names blank
+x Have calculator output a table: Rounds, Games/Man, Games/Woman for the first 5 multiples
+x General code cleanup (remove unused/repeat/old code)
+x Add names as optional
+x Have calculator accept Men No. and Women No, and suggest round number
+x fix "Courts" dropdown display in calculator to be in line
+x Create blank tourney doc (essentially just "_____" for names)
 
 WEBPAGE TODOS:
-- Ask copilot for reformatting page suggestions (feed screenshot)
 - Check for schedule print formatting, add print button if needed
-- provide table of parameters (name/type/default/desc)
-- “Play count & balance” quick calculator + explanation (eg for X players on 2 courts, recommend Y rounds for balance)
+X Ask copilot for reformatting page suggestions (feed screenshot)
+x provide table of parameters (name/type/default/desc)
+x “Play count & balance” quick calculator + explanation (eg for X players on 2 courts, recommend Y rounds for balance)
 x add note that if number of men/women is off by more than +-1, may want to fix it another way (eg have a guy play as a woman) bc the numbers will be off; 8 men 4 women means the guys play in half the games, and the women never get an off
 x Add link to GitHub repo to the web page
 x ensure website gets hit without trailing slash 

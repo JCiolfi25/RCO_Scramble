@@ -6,6 +6,14 @@ import GraphTheory
 
 app = Flask(__name__)
 
+global g_num_men, g_num_women,g_names_men, g_names_women, g_courts, g_rounds
+g_num_men = None
+g_num_women = None
+g_names_men = None
+g_names_women = None
+g_courts = None
+g_rounds = None
+
 @app.route('/',strict_slashes=False)
 def home():
     return_html_str = """
@@ -59,6 +67,31 @@ def home():
         <button type="submit">Go</button>
         <div style="height: 60px;"></div>
     </form>
+    <section style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; max-width: 750px;">
+        <h4>Play count &amp; balance</h4>
+        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 600px; margin-top: 1rem;">
+            <strong>Quick calculator</strong><br>
+            <label for="calcPlayersMen">Men:</label>
+            <select id="calcPlayersMen" style="width: 45px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 4 else ''}>{i}</option>' for i in range(2, 21)]) + """
+            </select>
+            <label for="calcPlayersWomen" style="margin-left: 12px;">Women:</label>
+            <select id="calcPlayersWomen" style="width: 45px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 6 else ''}>{i}</option>' for i in range(2, 21)]) + """
+            </select>
+            <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
+            <select id="calcCourts" style="width: 35px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 2 else ''}>{i}</option>' for i in range(1, 6)]) + """
+            </select>
+            <button type="button" onclick="calcMinRounds()" style="margin-left: 8px;">Compute</button>
+            <p id="calcResult" style="margin-top: 0.5rem;"></p>
+            <p style="font-size: 0.9em; margin:2px 0;">This calculates games per player per gender at the round numbers where every player within a gender plays the same number of games.
+            A fractional round number indicates you should use that fraction of the courts for the final round. EG: To play 12.5 rounds for 2 courts, use 12 2-court rounds and only one court for the final round.
+            If the genders are unbalanced, you can manually add in some single-gender games to help balance games between genders, or have a man enter thr tournement as a woman or vice versa.
+            For guideline on how many points to play to, divide total desired time (in minutes) by number of rounds to play (eg if you have 3 hours to play 12 rounds then play to 15 points, as 180 min/12 rounds = 15.</p>
+        </div>
+    </section>
+    <hr>
     <table style="border-collapse: collapse; width: 100%; max-width: 750px; margin-top: 1rem;">
         <thead>
             <tr>
@@ -90,49 +123,7 @@ def home():
             </tr>
         </tbody>
     </table>
-    <section style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; max-width: 750px;">
-        <h4>Play count &amp; balance</h4>
-        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 520px; margin-top: 1rem;">
-            <strong>Quick calculator</strong><br>
-            <label for="calcPlayersPerGender">Players per gender:</label>
-            <select id="calcPlayersPerGender" style="width: 70px; margin-left: 6px;">
-                """ + "".join([f'<option value="{i}">{i}</option>' for i in range(1, 21)]) + """
-            </select>
-            <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
-            <select id="calcCourts" style="width: 50px; margin-left: 6px;">
-                """ + "".join([f'<option value="{i}">{i}</option>' for i in range(1, 6)]) + """
-            </select>
-            <button type="button" onclick="calcMinRounds()" style="margin-left: 8px;">Compute</button>
-            <p id="calcResult" style="margin-top: 0.5rem;"></p>
-            <p style="font-size: 0.9em; margin:2px 0;">This calculates the least rounds where each player plays equally and teammate pairings are balanced (equal genders assumed).
-            If output says to play a fraction of a round, use that fraction of the courts for the final round. EG: If the result is 12.5 rounds for 2 courts, use 12 2-court rounds and only one court for the final round.</p>
-        </div>
-        <p>Balance note: if men and women differ then exact equal game count between genders will not be achievable, this will become dramatically exagerated as the difference increases past 1.
-        In this case you may want to balance the gender distribution by having a man enter as a woman or vice versa.</p>
-    </section>
-    <hr>
-    <h3>URL-based interface</h3>
     <p>
-        <strong>Generate a 12 round, 2 court RCO scramble schedule:</strong><br>
-        <code>/TourneyGen/&lt;num_each_gender&gt;</code><br>
-        Example: <a href="https://rco-scramble.onrender.com/TourneyGen/3">https://rco-scramble.onrender.com/TourneyGen/3</a> (3 men, 3 women)
-    </p>
-    <p>
-        <strong>Generate a schedule with custom courts and rounds:</strong><br>
-        <code>/TourneyGen/&lt;courts&gt;/&lt;rounds&gt;/&lt;num_each_gender&gt;</code><br>
-        Example: <a href="https://rco-scramble.onrender.com/TourneyGen/2/10/6">https://rco-scramble.onrender.com/TourneyGen/2/10/6</a> (2 courts, 10 rounds, 6 men, 6 women)
-    </p>
-    <p>
-        <strong>Specify men and women separately:</strong><br>
-        <code>/TourneyGen/&lt;courts&gt;/&lt;rounds&gt;/&lt;num_men&gt;/&lt;num_women&gt;</code><br>
-        Example: <a href="https://rco-scramble.onrender.com/TourneyGen/1/12/3/2">https://rco-scramble.onrender.com/TourneyGen/1/12/3/2</a> (1 court, 12 rounds, 3 men, 2 women)
-    </p>
-    <p>
-        If num_gender = num_men = num_women, and (num_games * 2) // num_gender = 0, then everyone will play the same number of games.
-    </p>
-    <hr>
-    <p>
-        <br><br>        
         <em>Repo for this website and the scheduler algorithm it uses:
         <a href="https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed">https://github.com/JCiolfi25/RCO_Scramble/tree/Render-deployed</a>
         </em>
@@ -147,11 +138,38 @@ def home():
             // Use /TourneyGen/<courts>/<rounds>/<num_men>/<num_women>
             window.location.href = `/TourneyGen/${courts}/${rounds}/${men}/${women}`;
         }
+        function calcMinGamesHelper(numPlayers) {
+            var playersPerGender = numPlayers;
+            // games_per_player = (2 * courts * rounds) / playersPerGender
+            // require integer number of games, and require at least playersPerGender rounds for teammate coverage
+            var games = 1;
 
+            // Ensure games_per_player integer
+            while ((2 * games) % playersPerGender !== 0) {
+                games += 1;
+            }
+            return games;
+        }
+        function findMinRounds(minGamesMen, minGamesWomen, numCourts) {
+            let lar = Math.max(minGamesMen, minGamesWomen);
+            let small = Math.min(minGamesMen, minGamesWomen);
+            var done = false;
+            var i = lar;
+            var gamesLCM = 0;
+            while (done == false) {
+                if (i % small == 0) {
+                    done = true;
+                    gamesLCM = i;
+                }
+                i += lar;
+            }
+            return Math.trunc(100 * gamesLCM / numCourts)/100;
+        }
         function calcMinRounds() {
-            var playersPerGender = parseInt(document.getElementById('calcPlayersPerGender').value, 10);
+            var playersMen = parseInt(document.getElementById('calcPlayersMen').value, 10);
+            var playersWomen = parseInt(document.getElementById('calcPlayersWomen').value, 10);
             var courts = parseInt(document.getElementById('calcCourts').value, 10);
-            if (isNaN(playersPerGender) || playersPerGender < 2) {
+            if (isNaN(playersMen) || playersMen < 2 || isNaN(playersWomen) || playersWomen < 2) {
                 document.getElementById('calcResult').innerHTML = 'Please select a valid number of players per gender (≥2).';
                 return;
             }
@@ -159,34 +177,110 @@ def home():
                 document.getElementById('calcResult').innerHTML = 'Please select a valid number of courts (≥1).';
                 return;
             }
-
-            // goal: same games per player and same teammate distribution with equal genders
-            // games_per_player = (2 * courts * rounds) / playersPerGender
-            // require integer, and require at least playersPerGender rounds for teammate coverage
-            var rounds = 1;
-
-            // Ensure games_per_player integer
-            while ((2 * courts * rounds) % playersPerGender !== 0) {
-                rounds += 1;
+            if (courts * 2 > playersMen || courts * 2 > playersWomen) {
+                document.getElementById('calcResult').innerHTML = 'Not enough players for the selected number of courts. ' +
+                    'Two players of each gender required per court.';
+                return;
             }
-            // Calculate games per player at this round count
-            var gamesPerPlayer = (2 * courts * rounds) / playersPerGender;
-            
-            // Calculate number of rounds for even teammate coverage:
-            var minRoundsForTeammateCoverage = rounds * (playersPerGender / gamesPerPlayer);
-            while (Math.ceil(minRoundsForTeammateCoverage * courts) !== minRoundsForTeammateCoverage * courts)
-            {
-                minRoundsForTeammateCoverage *= 2;
-            }
-
+            var minGamesMen = calcMinGamesHelper(playersMen);
+            var minGamesWomen = calcMinGamesHelper(playersWomen);
+            var minRounds = findMinRounds(minGamesMen, minGamesWomen, courts);
             document.getElementById('calcResult').innerHTML =
-                'Number of rounds for even game distribution: <strong>' + rounds + '</strong> ' +
-                '(yeilds ' + gamesPerPlayer + ' games per player with ' + courts + ' courts and ' + (2 * playersPerGender) + ' total players).'
-                 + '<br>Minimum rounds for even teammate coverage: <strong>' + minRoundsForTeammateCoverage + '</strong> (each player plays ' + (2 * courts * minRoundsForTeammateCoverage) / playersPerGender + ' games total)';
+                'Total rounds should be a multiple of <strong>' + minRounds + '</strong> ' +
+                '(Every ' + minRounds + ' rounds, each man plays ' + Math.round((2 * courts * minRounds) / playersMen) + ' games and each woman plays ' + Math.round((2 * courts * minRounds) / playersWomen) + ' games)';
+        
+            // Build table
+            var html = '<table border="1" cellpadding="6" style="border-collapse:collapse;text-align: center">';
+            html += '<tr><th>Rounds</th><th>Games per Man</th><th>Games per Woman</th></tr>';
+
+            // Generate 10 multiples (you can change this)
+            for (var i = 1; i <= 10; i++) {
+                var rounds = i * minRounds;
+                var gamesMen = Math.round((2 * courts * rounds) / playersMen);
+                var gamesWomen = Math.round((2 * courts * rounds) / playersWomen);
+
+                html += '<tr>' +
+                        '<td>' + rounds + '</td>' +
+                        '<td>' + gamesMen + '</td>' +
+                        '<td>' + gamesWomen + '</td>' +
+                        '</tr>';
+            }
+
+            html += '</table>';
+
+            document.getElementById('calcResult').innerHTML = html;
+
+        
         }
     </script>
     """
     return return_html_str
+
+
+@app.route('/TourneyGen/<int:courts>/<int:rounds>/<int:num_men>/<int:num_women>')
+def TourneyGenCourtsRoundsMenWomen(courts, rounds, num_men, num_women):
+# Target from /home Javascript; sets the globals and then rediirects to MakeTourney to get names entered
+    global g_num_men, g_num_women, g_courts, g_rounds
+    g_num_men = num_men
+    g_num_women = num_women
+    g_courts = courts
+    g_rounds = rounds
+    return redirect(url_for('EnterPlayerNames'))
+
+@app.route('/PlayerNames', methods=['GET', 'POST'], strict_slashes=False)
+# Allows entry of player names
+def EnterPlayerNames():
+    global g_num_men, g_num_women, g_courts, g_rounds
+    if g_num_men is None or g_num_women is None or g_courts is None or g_rounds is None:
+        return redirect(url_for('home'))
+    # Render form to get player names
+    if request.method == 'GET':
+        form_html = f"""
+        <h2>Enter Player Names</h2>
+        <h3>Men:</h3>
+        <form method="post">
+            {''.join([f'<input type="text" name="man_{i}" placeholder="Man{i+1}" title="Only letters, numbers, spaces, underscores, and hyphens allowed."><br>' for i in range(g_num_men)])}
+        <h3>Women:</h3>
+            {''.join([f'<input type="text" name="woman_{i}" placeholder="Woman{i+1}" title="Only letters, numbers, spaces, underscores, and hyphens allowed."><br>' for i in range(g_num_women)])}
+            <button type="submit">Go</button>
+        </form>
+        """
+        return form_html
+    # Handle form submission
+    elif request.method == 'POST':
+        import re
+        names_men = []
+        names_women=[]
+        for i in range(g_num_men):
+            name = request.form.get(f'man_{i}')
+            if name is None or len(name) == 0 or len(name.strip()) == 0:
+                name = f"Man{i+1}"
+            else: name = name.strip()
+            if not re.fullmatch(r'[A-Za-z0-9 _-]{1,32}', name):
+                return f"Invalid name for Man {i+1}: '{name}'. Only letters, numbers, spaces, underscores, and hyphens allowed. Max 32 characters."
+            names_men.append(name)
+        for i in range(g_num_women):
+            name = request.form.get(f'woman_{i}')
+            if name is None or len(name) == 0 or len(name.strip()) == 0:
+                name = f"Woman{i+1}"
+            else: name = name.strip()
+            if not re.fullmatch(r'[A-Za-z0-9 _-]{1,32}', name):
+                return f"Invalid name for Woman {i+1}: '{name}'. Only letters, numbers, spaces, underscores, and hyphens allowed. Max 32 characters."
+            names_women.append(name)
+
+    global g_names_men, g_names_women
+    g_names_men = names_men
+    g_names_women = names_women
+    return redirect(url_for('TourneyGenNames'))
+
+@app.route('/TourneyGenNames')
+def TourneyGenNames():
+    # Creates the actual tourney with the names provided from globals
+    global g_names_men, g_names_women, g_courts, g_rounds
+    if g_names_men is None or g_names_women is None or g_courts is None or g_rounds is None:
+        return redirect(url_for('home'))
+    scheddy = GraphTheory.Main(names_men=g_names_men, names_women=g_names_women, num_courts=g_courts, num_rounds=g_rounds)
+    return scheddy.ReturnHTMLSchedule()
 
 @app.errorhandler(404)
 # Redirect if someone tries to go to an invalid link
@@ -203,29 +297,5 @@ def hello_name():
 #http://127.0.0.1:5000/healthy
 def healthy():
     return "Healthy!"
-
-@app.route('/int/<int:num>')
-#http://127.0.0.1:5000/int/55
-def do_math(num):
-    return f"The square of {num} is {num**2}!"
-
-@app.route('/TourneyGen/<int:num_each_gender>')
-def TourneyGenGendersMatch(num_each_gender):
-    scheddy = GraphTheory.Main(num_men=num_each_gender)
-    return scheddy.ReturnHTMLSchedule()
-
-@app.route('/TourneyGen/<int:courts>/<int:rounds>/<int:num_each_gender>')
-def TourneyGenCourtsRoundsGendersMatch(courts, rounds, num_each_gender):
-    scheddy = GraphTheory.Main(num_courts=courts, num_rounds=rounds, num_men=num_each_gender)
-    return scheddy.ReturnHTMLSchedule()
-
-@app.route('/TourneyGen/<int:courts>/<int:rounds>/<int:num_men>/<int:num_women>')
-def TourneyGenCourtsRoundsMenWomen(courts, rounds, num_men, num_women):
-    scheddy = GraphTheory.Main(num_courts=courts, num_rounds=rounds, num_men=num_men, num_women=num_women)
-    return scheddy.ReturnHTMLSchedule()
-
-# headers = ["Name", "Age", "City"]
-# rows = [["Alice", 30, "Boston"], ["Bob", 27, "Chicago"]]
-# html_str = write_html_table("report.html", headers, rows, title="Employee Report")
 
 # To run, activate the .venv then run "flask run" in the terminal. Then visit http://127.0.0.1:5000

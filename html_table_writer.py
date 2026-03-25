@@ -1,4 +1,4 @@
-
+import flask
 def write_html_table(headers, rows, title):
     """Returns formatted HTML table from header and rows.
     Example usage:
@@ -52,10 +52,26 @@ def write_html_table(headers, rows, title):
         .home-btn:hover {{
           background: #005fa3;
         }}
+       
       </style>
     </head>
     <body>
-      <a href="/" class="home-btn">Home</a>
+      <a href="/" class="home-btn no-print">Home</a>
+       <button class="home-btn no-print" type="button" onclick="window.print()">Print</button>
+       <button class="home-btn no-print" type="button" onclick="printBlankSchedule()">Print Blank 2-Court Schedule</button>
+       
+    <script>
+    function printBlankSchedule() {{
+        const pdfUrl = "{flask.url_for('static', filename='Blank2Court16RoundSchedule.pdf')}";
+        const win = window.open(pdfUrl, "_blank");
+
+        win.onload = () => {{
+            win.focus();
+            win.print();
+        }};
+    }}
+    </script>
+
       <table>
         <caption>{esc(title)}</caption>
         <thead>
@@ -74,6 +90,54 @@ def write_html_table(headers, rows, title):
     return_str += """
         </tbody>
       </table>
+
     </body>
+    <style>
+  @page {
+    size: auto;
+    margin: 12mm;
+  }
+  
+    table th:first-child,
+    table td:first-child {
+      text-align: center !important;
+      white-space: nowrap;
+      width: 1%;
+    }
+
+    table td:nth-child(even),
+    table th:nth-child(even) {
+      text-align: right !important;
+    }
+  @media print {
+    body {
+      margin: 0;
+      color: #000;
+      background: #fff;
+    }
+    #tourneyForm, #calcWrapper, .no-print {
+      display: none !important;
+    }
+    table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      table-layout: auto !important;
+    }
+    table th, table td {
+      border: 1px solid #444 !important;
+      padding: 8px !important;
+      font-size: 12px !important;
+    }
+
+    tr:nth-child(even) td {
+      background: #fff !important;
+    }
+    tr:hover td {
+      background: none !important;
+    }
+  }
+</style>
     </html>"""
     return return_str
