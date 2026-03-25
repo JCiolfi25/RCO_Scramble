@@ -83,6 +83,18 @@ def write_html_table(headers, rows, title):
     size: auto;
     margin: 12mm;
   }
+  
+    table th:first-child,
+    table td:first-child {
+      text-align: center !important;
+      white-space: nowrap;
+      width: 1%;
+    }
+
+    table td:nth-child(even),
+    table th:nth-child(even) {
+      text-align: right !important;
+    }
   @media print {
     body {
       margin: 0;
@@ -97,13 +109,14 @@ def write_html_table(headers, rows, title):
       border-collapse: collapse !important;
       page-break-inside: avoid;
       break-inside: avoid;
-      table-layout: fixed !important;
+      table-layout: auto !important;
     }
     table th, table td {
       border: 1px solid #444 !important;
       padding: 8px !important;
       font-size: 12px !important;
     }
+
     tr:nth-child(even) td {
       background: #fff !important;
     }
