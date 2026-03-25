@@ -13,7 +13,9 @@ CONCEPTS:
 TODOS from 3-22-2026 tourney (Joel convo)
 x General code cleanup (remove unused/repeat/old code)
 x Add names as optional
-- Have calculator accept Men No. and Women No, and suggest round number
+x Have calculator accept Men No. and Women No, and suggest round number
+- Have calculator output a table: Rounds, Games/Man, Games/Woman for the first 5 multiples
+    - then add intelligence; eg show all up to Rounds of 20 
 - On Schedule add Played? checkbox that crosses out round
 - Have names included in a POST request, so multiple tourneys at once?
 - Give created toureny a key so anyone can go to page/KEY and it will pull up schedule WITH names

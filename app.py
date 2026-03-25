@@ -102,42 +102,30 @@ def home():
         <h4>Play count &amp; balance</h4>
         <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 520px; margin-top: 1rem;">
             <strong>Quick calculator</strong><br>
-            <label for="calcPlayersPerGender">Players per gender:</label>
-            <select id="calcPlayersPerGender" style="width: 70px; margin-left: 6px;">
-                """ + "".join([f'<option value="{i}">{i}</option>' for i in range(1, 21)]) + """
+            <label for="calcPlayersMen">Number of Men:</label>
+            <select id="calcPlayersMen" style="width: 70px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 4 else ''}>{i}</option>' for i in range(2, 21)]) + """
+            </select>
+            <label for="calcPlayersWomen" style="margin-left: 12px;">Number of Women:</label>
+            <select id="calcPlayersWomen" style="width: 70px; margin-left: 6px;">
+                """ + "".join([f'<option value="{i}"{' selected' if i == 6 else ''}>{i}</option>' for i in range(2, 21)]) + """
             </select>
             <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
             <select id="calcCourts" style="width: 50px; margin-left: 6px;">
-                """ + "".join([f'<option value="{i}">{i}</option>' for i in range(1, 6)]) + """
+                """ + "".join([f'<option value="{i}"{' selected' if i == 2 else ''}>{i}</option>' for i in range(1, 6)]) + """
             </select>
             <button type="button" onclick="calcMinRounds()" style="margin-left: 8px;">Compute</button>
             <p id="calcResult" style="margin-top: 0.5rem;"></p>
-            <p style="font-size: 0.9em; margin:2px 0;">This calculates the least rounds where each player plays equally and teammate pairings are balanced (equal genders assumed).
-            If output says to play a fraction of a round, use that fraction of the courts for the final round. EG: If the result is 12.5 rounds for 2 courts, use 12 2-court rounds and only one court for the final round.</p>
+            <p style="font-size: 0.9em; margin:2px 0;">This calculates the minimum number of rounds where players within a gender all play the same number of games.
+            If output says to play a fraction of a round, use that fraction of the courts for the final round. EG: If the result is 12.5 rounds for 2 courts, use 12 2-court rounds and only one court for the final round.
+            If the minimum number of rounds is less than you want to play, scale up as desired by multiples of this minimum value. 
+            If the genders are unbalanced, you can manually add in some single-gender games to help balance games between genders.
+            For guideline on how many points to play to, divide total desired time (in minutes) by number of rounds to play (eg if you have 3 hours to play 12 rounds then play to 15 points, as 180 min/12 rounds = 15.</p>
         </div>
         <p>Balance note: if men and women differ then exact equal game count between genders will not be achievable, this will become dramatically exagerated as the difference increases past 1.
         In this case you may want to balance the gender distribution by having a man enter as a woman or vice versa.</p>
     </section>
     <hr>
-    <h3>URL-based interface</h3>
-    <p>
-        <strong>Generate a 12 round, 2 court RCO scramble schedule:</strong><br>
-        <code>/TourneyGen/&lt;num_each_gender&gt;</code><br>
-        Example: <a href="https://rco-scramble.onrender.com/TourneyGen/3">https://rco-scramble.onrender.com/TourneyGen/3</a> (3 men, 3 women)
-    </p>
-    <p>
-        <strong>Generate a schedule with custom courts and rounds:</strong><br>
-        <code>/TourneyGen/&lt;courts&gt;/&lt;rounds&gt;/&lt;num_each_gender&gt;</code><br>
-        Example: <a href="https://rco-scramble.onrender.com/TourneyGen/2/10/6">https://rco-scramble.onrender.com/TourneyGen/2/10/6</a> (2 courts, 10 rounds, 6 men, 6 women)
-    </p>
-    <p>
-        <strong>Specify men and women separately:</strong><br>
-        <code>/TourneyGen/&lt;courts&gt;/&lt;rounds&gt;/&lt;num_men&gt;/&lt;num_women&gt;</code><br>
-        Example: <a href="https://rco-scramble.onrender.com/TourneyGen/1/12/3/2">https://rco-scramble.onrender.com/TourneyGen/1/12/3/2</a> (1 court, 12 rounds, 3 men, 2 women)
-    </p>
-    <p>
-        If num_gender = num_men = num_women, and (num_games * 2) // num_gender = 0, then everyone will play the same number of games.
-    </p>
     <hr>
     <p>
         <br><br>        
@@ -155,11 +143,38 @@ def home():
             // Use /TourneyGen/<courts>/<rounds>/<num_men>/<num_women>
             window.location.href = `/TourneyGen/${courts}/${rounds}/${men}/${women}`;
         }
+        function calcMinGamesHelper(numPlayers) {
+            var playersPerGender = numPlayers;
+            // games_per_player = (2 * courts * rounds) / playersPerGender
+            // require integer number of games, and require at least playersPerGender rounds for teammate coverage
+            var games = 1;
 
+            // Ensure games_per_player integer
+            while ((2 * games) % playersPerGender !== 0) {
+                games += 1;
+            }
+            return games;
+        }
+        function findMinRounds(minGamesMen, minGamesWomen, numCourts) {
+            let lar = Math.max(minGamesMen, minGamesWomen);
+            let small = Math.min(minGamesMen, minGamesWomen);
+            var done = false;
+            var i = lar;
+            var gamesLCM = 0;
+            while (done == false) {
+                if (i % small == 0) {
+                    done = true;
+                    gamesLCM = i;
+                }
+                i += lar;
+            }
+            return Math.trunc(100 * gamesLCM / numCourts)/100;
+        }
         function calcMinRounds() {
-            var playersPerGender = parseInt(document.getElementById('calcPlayersPerGender').value, 10);
+            var playersMen = parseInt(document.getElementById('calcPlayersMen').value, 10);
+            var playersWomen = parseInt(document.getElementById('calcPlayersWomen').value, 10);
             var courts = parseInt(document.getElementById('calcCourts').value, 10);
-            if (isNaN(playersPerGender) || playersPerGender < 2) {
+            if (isNaN(playersMen) || playersMen < 2 || isNaN(playersWomen) || playersWomen < 2) {
                 document.getElementById('calcResult').innerHTML = 'Please select a valid number of players per gender (≥2).';
                 return;
             }
@@ -167,30 +182,18 @@ def home():
                 document.getElementById('calcResult').innerHTML = 'Please select a valid number of courts (≥1).';
                 return;
             }
-
-            // goal: same games per player and same teammate distribution with equal genders
-            // games_per_player = (2 * courts * rounds) / playersPerGender
-            // require integer, and require at least playersPerGender rounds for teammate coverage
-            var rounds = 1;
-
-            // Ensure games_per_player integer
-            while ((2 * courts * rounds) % playersPerGender !== 0) {
-                rounds += 1;
+            if (courts * 2 > playersMen || courts * 2 > playersWomen) {
+                document.getElementById('calcResult').innerHTML = 'Not enough players for the selected number of courts. ' +
+                    'Two players of each gender required per court.';
+                return;
             }
-            // Calculate games per player at this round count
-            var gamesPerPlayer = (2 * courts * rounds) / playersPerGender;
-            
-            // Calculate number of rounds for even teammate coverage:
-            var minRoundsForTeammateCoverage = rounds * (playersPerGender / gamesPerPlayer);
-            while (Math.ceil(minRoundsForTeammateCoverage * courts) !== minRoundsForTeammateCoverage * courts)
-            {
-                minRoundsForTeammateCoverage *= 2;
-            }
+            var minGamesMen = calcMinGamesHelper(playersMen);
+            var minGamesWomen = calcMinGamesHelper(playersWomen);
 
+            var minRounds = findMinRounds(minGamesMen, minGamesWomen, courts);
             document.getElementById('calcResult').innerHTML =
-                'Number of rounds for even game distribution: <strong>' + rounds + '</strong> ' +
-                '(yeilds ' + gamesPerPlayer + ' games per player with ' + courts + ' courts and ' + (2 * playersPerGender) + ' total players).'
-                 + '<br>Minimum rounds for even teammate coverage: <strong>' + minRoundsForTeammateCoverage + '</strong> (each player plays ' + (2 * courts * minRoundsForTeammateCoverage) / playersPerGender + ' games total)';
+                'Total rounds should be a multiple of <strong>' + minRounds + '</strong> ' +
+                '(Every ' + minRounds + ' rounds, each man plays ' + Math.round((2 * courts * minRounds) / playersMen) + ' games and each woman plays ' + Math.round((2 * courts * minRounds) / playersWomen) + ' games)';
         }
     </script>
     """
