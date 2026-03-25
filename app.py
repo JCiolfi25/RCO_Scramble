@@ -201,47 +201,6 @@ def home():
 def page_not_found(e):
     return redirect(url_for('home'))
 
-@app.route('/Start/<int:num_men>/<int:num_women>', methods=['GET', 'POST'], strict_slashes=False)
-#initializes tourney with given number of players
-def MakeTourney(num_men, num_women):
-    # Render form to get player names
-    if request.method == 'GET':
-        form_html = f"""
-        <h2>Enter Player Names</h2>
-        <h3>Men:</h3>
-        <form method="post">
-            {''.join([f'<input type="text" name="man_{i}" placeholder="Man{i+1}" title="Only letters, numbers, spaces, underscores, and hyphens allowed."><br>' for i in range(num_men)])}
-        </form>
-        <h3>Women:</h3>
-        <form method="post">
-            {''.join([f'<input type="text" name="woman_{i}" placeholder="Woman{i+1}" title="Only letters, numbers, spaces, underscores, and hyphens allowed."><br>' for i in range(num_women)])}
-            <button type="submit">Go</button>
-        </form>
-        """
-        return form_html
-    # Handle form submission
-    elif request.method == 'POST':
-        import re
-        names_men = []
-        names_women=[]
-        for i in range(num_men):
-            name = request.form.get(f'man_{i}').strip()
-            if len(name) == 0:
-                name = f"Man{i+1}"
-            if not re.fullmatch(r'[A-Za-z0-9 _-]{1,32}', name):
-                return f"Invalid name for Man {i+1}: '{name}'. Only letters, numbers, spaces, underscores, and hyphens allowed. Max 32 characters."
-            names_men.append(name)
-        for i in range(num_women):
-            name = request.form.get(f'woman_{i}').strip()
-            if len(name) == 0:
-                name = f"Woman{i+1}"
-            if not re.fullmatch(r'[A-Za-z0-9 _-]{1,32}', name):
-                return f"Invalid name for Woman {i+1}: '{name}'. Only letters, numbers, spaces, underscores, and hyphens allowed. Max 32 characters."
-            names_women.append(name)
-    global g_names_men, g_names_women
-    g_names_men = names_men
-    g_names_women = names_women
-    return redirect(url_for('TourneyGenNames'))
 
 @app.route('/hello')
 #http://127.0.0.1:5000/hello?name=John
@@ -254,17 +213,71 @@ def hello_name():
 def healthy():
     return "Healthy!"
 
-@app.route('/int/<int:num>')
-#http://127.0.0.1:5000/int/55
-def do_math(num):
-    return f"The square of {num} is {num**2}!"
-
-@app.route('/TourneyGenNames/<int:courts>/<int:rounds>')
-def TourneyGenNames(courts, rounds):
-    global g_names_men, g_names_women
-    if g_names_men is None or g_names_women is None:
+@app.route('/PlayerNames', methods=['GET', 'POST'], strict_slashes=False)
+#initializes tourney with given number of players
+def EnterPlayerNames():
+    global g_num_men, g_num_women, g_courts, g_rounds
+    if g_num_men is None or g_num_women is None or g_courts is None or g_rounds is None:
         return redirect(url_for('home'))
-    scheddy = GraphTheory.Main(names_men=g_names_men, names_women=g_names_women, num_courts=courts, num_rounds=rounds)
+    # Render form to get player names
+    if request.method == 'GET':
+        form_html = f"""
+        <h2>Enter Player Names</h2>
+        <h3>Men:</h3>
+        <form method="post">
+            {''.join([f'<input type="text" name="man_{i}" placeholder="Man{i+1}" title="Only letters, numbers, spaces, underscores, and hyphens allowed."><br>' for i in range(g_num_men)])}
+        <h3>Women:</h3>
+            {''.join([f'<input type="text" name="woman_{i}" placeholder="Woman{i+1}" title="Only letters, numbers, spaces, underscores, and hyphens allowed."><br>' for i in range(g_num_women)])}
+            <button type="submit">Go</button>
+        </form>
+        """
+        return form_html
+    # Handle form submission
+    elif request.method == 'POST':
+        import re
+        names_men = []
+        names_women=[]
+        for i in range(g_num_men):
+            name = request.form.get(f'man_{i}')
+            if name is None or len(name) == 0 or len(name.strip()) == 0:
+                name = f"Man{i+1}"
+            else: name = name.strip()
+            if not re.fullmatch(r'[A-Za-z0-9 _-]{1,32}', name):
+                return f"Invalid name for Man {i+1}: '{name}'. Only letters, numbers, spaces, underscores, and hyphens allowed. Max 32 characters."
+            names_men.append(name)
+            # print(f"Man {i+1}: {name}") #???
+        for i in range(g_num_women):
+            name = request.form.get(f'woman_{i}')
+            if name is None or len(name) == 0 or len(name.strip()) == 0:
+                name = f"Woman{i+1}"
+            else: name = name.strip()
+            if not re.fullmatch(r'[A-Za-z0-9 _-]{1,32}', name):
+                return f"Invalid name for Woman {i+1}: '{name}'. Only letters, numbers, spaces, underscores, and hyphens allowed. Max 32 characters."
+            names_women.append(name)
+            # print(f"Woman {i+1}: {name}") #???
+
+    global g_names_men, g_names_women
+    g_names_men = names_men
+    g_names_women = names_women
+    return redirect(url_for('TourneyGenNames'))
+
+
+@app.route('/TourneyGen/<int:courts>/<int:rounds>/<int:num_men>/<int:num_women>')
+def TourneyGenCourtsRoundsMenWomen(courts, rounds, num_men, num_women):
+    global g_num_men, g_num_women, g_courts, g_rounds
+# have this just set the globals and then rediirect to MakeTourney to get names entered
+    g_num_men = num_men
+    g_num_women = num_women
+    g_courts = courts
+    g_rounds = rounds
+    return redirect(url_for('EnterPlayerNames'))
+
+@app.route('/TourneyGenNames')
+def TourneyGenNames():
+    global g_names_men, g_names_women, g_courts, g_rounds
+    if g_names_men is None or g_names_women is None or g_courts is None or g_rounds is None:
+        return redirect(url_for('home'))
+    scheddy = GraphTheory.Main(names_men=g_names_men, names_women=g_names_women, num_courts=g_courts, num_rounds=g_rounds)
     return scheddy.ReturnHTMLSchedule()
 
 # @app.route('/TourneyGen/<int:num_each_gender>')
@@ -276,19 +289,6 @@ def TourneyGenNames(courts, rounds):
 # def TourneyGenCourtsRoundsGendersMatch(courts, rounds, num_each_gender):
 #     scheddy = GraphTheory.Main(num_courts=courts, num_rounds=rounds, num_men=num_each_gender)
 #     return scheddy.ReturnHTMLSchedule()
-
-@app.route('/TourneyGen/<int:courts>/<int:rounds>/<int:num_men>/<int:num_women>')
-def TourneyGenCourtsRoundsMenWomen(courts, rounds, num_men, num_women):
-    global g_num_men, g_num_women, g_courts, g_rounds
-#!!!! have this just set the globals and then rediirect to TourneyGenNames
-    g_num_men = None
-    g_num_women = None
-    g_names_men = None
-    g_names_women = None
-    g_courts = None
-    g_rounds = None
-    scheddy = GraphTheory.Main(num_courts=courts, num_rounds=rounds, num_men=num_men, num_women=num_women)
-    return scheddy.ReturnHTMLSchedule()
 
 # headers = ["Name", "Age", "City"]
 # rows = [["Alice", 30, "Boston"], ["Bob", 27, "Chicago"]]
