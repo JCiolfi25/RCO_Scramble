@@ -1,0 +1,8 @@
+Make web interface!!
+https://flask.palletsprojects.com/en/stable/quickstart/#a-minimal-application
+
+Initial:
+- verify flask/render with default
+- Create custom flask/render and test with command line
+- Create HTTP post thing so can pull in based on URL
+- tie that URL call to num_players, assumes the number passed in is the number of players and posts the schedule
