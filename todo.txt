@@ -11,17 +11,26 @@ CONCEPTS:
     min(num_games) = LCM(num_men/2, num_women/2); every that many games will be even
 
 TODOS from 3-22-2026 tourney (Joel convo)
+- Add "Print blank schedule" button that prints schedule with given Courts and Rounds but all names blank
+    - Add note at bottom of page: "After each match, circle winning team and write score differential"
+- Have calculator output a table: Rounds, Games/Man, Games/Woman for the first 5 multiples
+    - then add intelligence; eg show all up to Rounds of 20
+- Have names included in a POST request, so multiple tourneys at once?
+- Give created toureny a key so anyone can go to page/KEY and it will pull up schedule WITH names
+    - Key is important here because it lets a static QR code be dynamically assigned
+    - Maybe have server-side CSV, column per gender per tourney and row per name? 
+    - Key as secondary header, search most recent first?
+    - Create a landing "Viewer" page that just asks for you to enter key (or select from dropdown)
+- Add padding or text of some kind above or below the schedule so on phones you can zoom out and see the whole thing at once
+- Add calculator and tourney gen support for single-gender scramble
+- On Schedule add Played? checkbox that crosses out round
+- Move each game to its own line (with clear rounds break)
+    - Add Score Diff boxes to side of each team when printing
 x General code cleanup (remove unused/repeat/old code)
 x Add names as optional
 x Have calculator accept Men No. and Women No, and suggest round number
-- Have calculator output a table: Rounds, Games/Man, Games/Woman for the first 5 multiples
-    - then add intelligence; eg show all up to Rounds of 20 
-- On Schedule add Played? checkbox that crosses out round
-- Have names included in a POST request, so multiple tourneys at once?
-- Give created toureny a key so anyone can go to page/KEY and it will pull up schedule WITH names
-- Move each game to its own line (with clear rounds break)
-    - Add Score Diff boxes to side of each team when printing
-- Create blank tourney doc (essentillay just "_____" for names)
+x fix "Courts" dropdown display in calculator to be in line
+x Create blank tourney doc (essentially just "_____" for names)
 
 WEBPAGE TODOS:
 - Check for schedule print formatting, add print button if needed

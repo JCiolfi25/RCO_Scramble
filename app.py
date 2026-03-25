@@ -100,18 +100,18 @@ def home():
     </table>
     <section style="margin-top: 1.5rem; padding: 1rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; max-width: 750px;">
         <h4>Play count &amp; balance</h4>
-        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 520px; margin-top: 1rem;">
+        <div style="border: 1px solid #ddd; padding: 10px; border-radius: 6px; background: #fff; max-width: 600px; margin-top: 1rem;">
             <strong>Quick calculator</strong><br>
-            <label for="calcPlayersMen">Number of Men:</label>
-            <select id="calcPlayersMen" style="width: 70px; margin-left: 6px;">
+            <label for="calcPlayersMen">Men:</label>
+            <select id="calcPlayersMen" style="width: 45px; margin-left: 6px;">
                 """ + "".join([f'<option value="{i}"{' selected' if i == 4 else ''}>{i}</option>' for i in range(2, 21)]) + """
             </select>
-            <label for="calcPlayersWomen" style="margin-left: 12px;">Number of Women:</label>
-            <select id="calcPlayersWomen" style="width: 70px; margin-left: 6px;">
+            <label for="calcPlayersWomen" style="margin-left: 12px;">Women:</label>
+            <select id="calcPlayersWomen" style="width: 45px; margin-left: 6px;">
                 """ + "".join([f'<option value="{i}"{' selected' if i == 6 else ''}>{i}</option>' for i in range(2, 21)]) + """
             </select>
             <label for="calcCourts" style="margin-left: 12px;">Courts:</label>
-            <select id="calcCourts" style="width: 50px; margin-left: 6px;">
+            <select id="calcCourts" style="width: 35px; margin-left: 6px;">
                 """ + "".join([f'<option value="{i}"{' selected' if i == 2 else ''}>{i}</option>' for i in range(1, 6)]) + """
             </select>
             <button type="button" onclick="calcMinRounds()" style="margin-left: 8px;">Compute</button>
@@ -125,7 +125,6 @@ def home():
         <p>Balance note: if men and women differ then exact equal game count between genders will not be achievable, this will become dramatically exagerated as the difference increases past 1.
         In this case you may want to balance the gender distribution by having a man enter as a woman or vice versa.</p>
     </section>
-    <hr>
     <hr>
     <p>
         <br><br>        
