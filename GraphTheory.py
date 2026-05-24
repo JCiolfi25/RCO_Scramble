@@ -551,7 +551,7 @@ def SweepTest():
 if __name__ == "__main__":
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
     # Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=True)
-    # Main(names_men=['Jake', 'Tommy', 'Tor', 'Wes', 'Matt', 'Rupak', 'Markiesh', 'Ray'], names_women=['Meghan', 'Kiley', 'Lindy','Sarah', 'Tiffani', 'Sacha', 'Amanda', 'Mary'], algo_params=algo_params, num_rounds=16, num_courts=4, save_csvs=True, print_overall=True, print_individuals=False)
-    Main(num_men=7, num_women=7, algo_params=algo_params, num_rounds=12, num_courts=2, save_csvs=True, print_overall=True, print_individuals=False)
+    Main(names_men=['Jake', 'Tommy', 'Tor', 'Wes', 'Matt', 'Rupak', 'Markiesh', 'Ray'], names_women=['Meghan', 'Kiley', 'Lindy','Sarah', 'Tiffani', 'Sacha', 'Amanda', 'Mary'], algo_params=algo_params, num_rounds=8, num_courts=4, save_csvs=True, print_overall=True, print_individuals=False)
+    # Main(num_men=7, num_women=7, algo_params=algo_params, num_rounds=12, num_courts=2, save_csvs=True, print_overall=True, print_individuals=False)
     # SweepTest()
     print("Done")
