@@ -3,6 +3,7 @@ from flask import Flask, request, redirect, url_for
 from markupsafe import escape
 from html_table_writer import write_html_table
 import GraphTheory
+from manus_scheduler2 import VolleyballScheduler
 
 app = Flask(__name__)
 
@@ -279,8 +280,11 @@ def TourneyGenNames():
     global g_names_men, g_names_women, g_courts, g_rounds
     if g_names_men is None or g_names_women is None or g_courts is None or g_rounds is None:
         return redirect(url_for('home'))
-    scheddy = GraphTheory.Main(names_men=g_names_men, names_women=g_names_women, num_courts=g_courts, num_rounds=g_rounds)
-    return scheddy.ReturnHTMLSchedule()
+    # scheddy = GraphTheory.Main(names_men=g_names_men, names_women=g_names_women, num_courts=g_courts, num_rounds=g_rounds)
+    # return scheddy.ReturnHTMLSchedule()
+    scheduler = VolleyballScheduler(g_names_men, g_names_women, g_courts, g_rounds)
+    schedule = scheduler.generate(iterations_per_round=10000)
+    return scheduler.ReturnHTMLSchedule()
 
 @app.errorhandler(404)
 # Redirect if someone tries to go to an invalid link
