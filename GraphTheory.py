@@ -466,7 +466,7 @@ def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=N
     for i in range(num_rounds_sched):
         master_round.WeightEdges(algo_params=algo_params) #re-weight the edges between rounds
         selected_games = master_round.CullOptimal(numCourts=num_courts) #num_courts is the simultaneous number of games to be played
-        if i+1 ==6: #DEBUG: Printing round's math and result !!!???
+        if i+1 ==99: #DEBUG: Printing round's math and result !!!???
             master_round.Print(print_edges=True) 
             for game in selected_games:
                 game.Print()
@@ -551,6 +551,7 @@ def SweepTest():
 if __name__ == "__main__":
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
     # Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=True)
-    Main(names_men=['Jake', 'Tommy', 'Tor', 'Wes', 'Matt', 'Rupak', 'Markiesh', 'Ray'], names_women=['Meghan', 'Kiley', 'Lindy','Sarah', 'Tiffani', 'Sacha', 'Amanda', 'Mary'], algo_params=algo_params, num_rounds=8, num_courts=4, save_csvs=True, print_overall=True, print_individuals=False)
+    # Main(names_men=['Jake', 'Tommy', 'Tor', 'Wes', 'Matt', 'Rupak', 'Markiesh', 'Ray'], names_women=['Meghan', 'Kiley', 'Lindy','Sarah', 'Tiffani', 'Sacha', 'Amanda', 'Mary'], algo_params=algo_params, num_rounds=16, num_courts=4, save_csvs=True, print_overall=True, print_individuals=False)
+    Main(num_men=7, num_women=7, algo_params=algo_params, num_rounds=12, num_courts=2, save_csvs=True, print_overall=True, print_individuals=False)
     # SweepTest()
     print("Done")
