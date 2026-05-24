@@ -90,20 +90,150 @@ class Round:
         for edge in self.edges:
             edge.WeightSelf(algo_params)
         self.isWeighted = True
-    def Cull(self, numCourts=None): # Select games with lowest weights; if numCourts is specified, select that many games; otherwise, select as many games as possible without repeating teams
+    def Cull(self, numCourts=None, printEdgeStats=False): # Select games with lowest weights; if numCourts is specified, select that many games; otherwise, select as many games as possible without repeating teams
         # Round.Cull() returns the list of games to be played this round, based on edge weights
         self.edges.sort(key=lambda e: e.weight)
         selected_games = list()
         used_players = set()
+        max_selected_edge = 0
         for edge in self.edges:
             if edge.team1.player1 not in used_players and edge.team1.player2 not in used_players and edge.team2.player1 not in used_players and edge.team2.player2 not in used_players:
                 selected_games.append(Game(edge.team1, edge.team2))
                 used_players.update([edge.team1.player1, edge.team1.player2, edge.team2.player1, edge.team2.player2])
+                if edge.weight > max_selected_edge:
+                    max_selected_edge = edge.weight
                 if len(selected_games) == numCourts: # if numCourts is unspecified and therefore None, this condition will never be true and it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
                     break
+        
+        if printEdgeStats:
+            print(f"Total edges: {len(self.edges)}")
+            print(f"Max selected edge weight: {max_selected_edge}")
+            print(f"Average edge weight: {sum(e.weight for e in self.edges)/len(self.edges) if self.edges else 0}")
+            print(f"Min edge weight: {self.edges[0].weight if self.edges else 0}")
+            print(f"Max edge weight: {self.edges[-1].weight if self.edges else 0}")
         self.isCulled = True
         return selected_games
-    def CullOptimal(self, numCourts=None):
+    def CullDeep1(self, numCourts=None, printEdgeStats=False): # Select games with lowest weights; if numCourts is specified, select that many games; otherwise, select as many games as possible without repeating teams
+        # Round.Cull() returns the list of games to be played this round, based on edge weights
+        # Attempts look-ahead to minimize max selected edge for the round, trying multiple possibilities
+        self.edges.sort(key=lambda e: e.weight)
+        traversed_edges = set()
+        final_selected_games = list()
+        max_selected_edge = None
+        looped = 0
+        while len(traversed_edges) < len(self.edges): # While there are still edges that haven't been traversed
+            looped+=1
+            # print(f"++++++++++++++++++++++++++Starting loop {looped}") #????
+            selected_games = list()
+            used_players = set()
+            this_path_max_edge = 0
+            found_new_path = 1
+            for edge in self.edges:
+                if edge not in traversed_edges:
+                    if edge.team1.player1 not in used_players and edge.team1.player2 not in used_players and edge.team2.player1 not in used_players and edge.team2.player2 not in used_players:
+                        traversed_edges.add(edge)
+                        if max_selected_edge and edge.weight > max_selected_edge:
+                            found_new_path = 0
+                            break # If this edge's weight is already higher than the max selected edge from previous paths, no need to continue down this path
+                        selected_games.append(Game(edge.team1, edge.team2))
+                        used_players.update([edge.team1.player1, edge.team1.player2, edge.team2.player1, edge.team2.player2])
+                        if edge.weight > this_path_max_edge:
+                            this_path_max_edge = edge.weight
+                        if len(selected_games) == numCourts: # if numCourts is unspecified and therefore None, this condition will never be true and it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
+                            break
+            # if max_selected_edge == None or this_path_max_edge < max_selected_edge:
+            if found_new_path == 1:
+                max_selected_edge = this_path_max_edge
+                final_selected_games = selected_games
+        if printEdgeStats:
+            print(f"Total edges: {len(self.edges)}")
+            print(f"Max selected edge weight: {max_selected_edge}")
+            print(f"Average edge weight: {sum(e.weight for e in self.edges)/len(self.edges) if self.edges else 0}")
+            print(f"Min edge weight: {self.edges[0].weight if self.edges else 0}")
+            print(f"Max edge weight: {self.edges[-1].weight if self.edges else 0}")
+        self.isCulled = True
+        return final_selected_games
+    def CullDeep2(self, numCourts=None, printEdgeStats=False):
+        """Select games using an iterative DFS (stack) with stronger pruning to avoid recursion depth.
+
+        Pruning strategies:
+        - Branch-and-bound: stop if current max weight >= best found
+        - Feasibility bound: if numCourts is set, compute maximum additional games possible from remaining players; prune if impossible
+        - Prefer including low-weight edges first so good bounds are found early
+        """
+        self.edges.sort(key=lambda e: e.weight)
+
+        # gather total distinct players in this round
+        total_players = set()
+        for t in self.teams:
+            total_players.update([t.player1, t.player2])
+        total_players_count = len(total_players)
+
+        best_solution = {'games': [], 'max_weight': float('inf')}
+
+        # Stack entries: (edge_idx, current_edges_list_of_Edge, used_players_set, current_max_weight)
+        stack = [(0, [], set(), 0)]
+        nodes_explored = 0
+
+        while stack:
+            edge_idx, cur_edges, used_players, cur_max = stack.pop()
+            nodes_explored += 1
+
+            # global prune: if already worse than best, skip
+            if cur_max >= best_solution['max_weight']:
+                continue
+
+            # if numCourts specified, quick feasibility check: remaining players can only form floor(remaining/4) more games
+            if numCourts is not None:
+                remaining_players = total_players_count - len(used_players)
+                max_additional_games = remaining_players // 4
+                if len(cur_edges) + max_additional_games < numCourts:
+                    continue
+
+            # if we've selected required number of games, update best
+            if numCourts is not None and len(cur_edges) >= numCourts:
+                if (cur_max < best_solution['max_weight'] or
+                    (cur_max == best_solution['max_weight'] and len(cur_edges) > len(best_solution['games']))):
+                    best_solution['games'] = [Game(e.team1, e.team2) for e in cur_edges]
+                    best_solution['max_weight'] = cur_max
+                continue
+
+            # If no more edges, consider updating best (for numCourts==None we accept any cardinality)
+            if edge_idx >= len(self.edges):
+                if cur_edges:
+                    if (cur_max < best_solution['max_weight'] or
+                        (cur_max == best_solution['max_weight'] and len(cur_edges) > len(best_solution['games']))):
+                        best_solution['games'] = [Game(e.team1, e.team2) for e in cur_edges]
+                        best_solution['max_weight'] = cur_max
+                continue
+
+            # Branching: push skip and include. Push skip first so include (better) is explored first (LIFO)
+            # Skip current edge
+            stack.append((edge_idx + 1, cur_edges, used_players, cur_max))
+
+            # Try include current edge if players free
+            edge = self.edges[edge_idx]
+            players = [edge.team1.player1, edge.team1.player2, edge.team2.player1, edge.team2.player2]
+            if not any(p in used_players for p in players):
+                new_used = used_players | set(players)
+                new_edges = cur_edges + [edge]
+                new_max = max(cur_max, edge.weight)
+                # Small additional prune: if new_max already >= best, skip pushing
+                if new_max < best_solution['max_weight']:
+                    stack.append((edge_idx + 1, new_edges, new_used, new_max))
+
+        if printEdgeStats:
+            print(f"Total edges: {len(self.edges)}")
+            print(f"Nodes explored: {nodes_explored}")
+            print(f"Max selected edge weight: {best_solution['max_weight']}")
+            print(f"Average edge weight: {sum(e.weight for e in self.edges)/len(self.edges) if self.edges else 0}")
+            print(f"Min edge weight: {self.edges[0].weight if self.edges else 0}")
+            print(f"Max edge weight: {self.edges[-1].weight if self.edges else 0}")
+
+        self.isCulled = True
+        return [Game(e.team1, e.team2) for e in best_solution['games']]
+    
+    def CullOptimal(self, numCourts=None, printEdgeStats=False):
         """Select games that minimize total weight while respecting player availability.
         
         Uses a greedy approach with edge conflict detection to ensure:
@@ -465,7 +595,11 @@ def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=N
     games_added = 0
     for i in range(num_rounds_sched):
         master_round.WeightEdges(algo_params=algo_params) #re-weight the edges between rounds
-        selected_games = master_round.CullOptimal(numCourts=num_courts) #num_courts is the simultaneous number of games to be played
+        # selected_games = master_round.CullOptimal(numCourts=num_courts) #num_courts is the simultaneous number of games to be played
+        print(f"Round {i+1} - Optimal Cull:")
+        selected_games = master_round.CullDeep2(numCourts=num_courts, printEdgeStats=True) #num_courts is the simultaneous number of games to be played
+        # selected_games = master_round.Cull(numCourts=num_courts, printEdgeStats=True) #num_courts is the simultaneous number of games to be played
+
         if i+1 ==99: #DEBUG: Printing round's math and result !!!???
             master_round.Print(print_edges=True) 
             for game in selected_games:
