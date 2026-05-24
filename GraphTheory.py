@@ -12,6 +12,7 @@ import os # used to check if file exists
 import itertools
 from datetime import datetime
 from html_table_writer import write_html_table
+import networkx as nx
 
 
 class AlgoParams:
@@ -83,7 +84,7 @@ class Round:
         if print_edges:
             print("Edges:")
             self.edges.sort(key=lambda e: e.weight)
-            for edge in self.edges:#.sort(key=lambda e: e.weight):
+            for edge in self.edges[:100]:#printing first 100 bc limitations of console print
                 print(f"  {edge.team1.name} - {edge.team2.name}: {edge.weight}")
     def WeightEdges(self, algo_params):
         for edge in self.edges:
@@ -100,6 +101,86 @@ class Round:
                 used_players.update([edge.team1.player1, edge.team1.player2, edge.team2.player1, edge.team2.player2])
                 if len(selected_games) == numCourts: # if numCourts is unspecified and therefore None, this condition will never be true and it will select as many games as possible without repeating teams; if numCourts is specified, it will select that many games
                     break
+        self.isCulled = True
+        return selected_games
+    def CullOptimal(self, numCourts=None):
+        """Select games that minimize total weight while respecting player availability.
+        
+        Uses a greedy approach with edge conflict detection to ensure:
+        1. No player appears in multiple games in the same round
+        2. Total weight of selected matches is minimized
+        
+        Builds a conflict graph where nodes are possible matches (edges) and 
+        connections exist between matches that share a player, then finds the 
+        maximum weight independent set of matches.
+        
+        Args:
+            numCourts: Maximum number of games to select. If None, selects maximum possible.
+        
+        Returns:
+            List of Game objects representing the optimal matching for this round.
+        """
+        if not self.edges:
+            return []
+        
+        # Sort edges by weight to process lowest-weight edges first
+        sorted_edges = sorted(self.edges, key=lambda e: e.weight)
+        
+        # Build conflict graph: nodes are edge indices, edges connect conflicts
+        conflict_graph = nx.Graph()
+        for i in range(len(sorted_edges)):
+            conflict_graph.add_node(i)
+        
+        # Add edges in conflict graph for any edges that share a player
+        for i in range(len(sorted_edges)):
+            for j in range(i + 1, len(sorted_edges)):
+                edge_i = sorted_edges[i]
+                edge_j = sorted_edges[j]
+                
+                # Get all 4 players involved in each match
+                players_i = {edge_i.team1.player1, edge_i.team1.player2, 
+                            edge_i.team2.player1, edge_i.team2.player2}
+                players_j = {edge_j.team1.player1, edge_j.team1.player2,
+                            edge_j.team2.player1, edge_j.team2.player2}
+                
+                # If edges share any player, they conflict
+                if players_i & players_j:  # Set intersection
+                    conflict_graph.add_edge(i, j)
+        
+        # Find maximum weight independent set using greedy approach
+        # (optimal solution is NP-hard, but greedy works well for this problem)
+        selected_indices = []
+        used_players = set()
+        
+        for idx in range(len(sorted_edges)):
+            if idx in selected_indices:
+                continue
+            
+            edge = sorted_edges[idx]
+            players = {edge.team1.player1, edge.team1.player2,
+                      edge.team2.player1, edge.team2.player2}
+            
+            # Check if this edge conflicts with any already selected edge
+            conflicts = False
+            for selected_idx in selected_indices:
+                if conflict_graph.has_edge(idx, selected_idx):
+                    conflicts = True
+                    break
+            
+            # Also check if any player is already used
+            if not conflicts and not (players & used_players):
+                selected_indices.append(idx)
+                used_players.update(players)
+                
+                if numCourts is not None and len(selected_indices) >= numCourts:
+                    break
+        
+        # Convert selected edge indices to Game objects
+        selected_games = []
+        for idx in selected_indices:
+            edge = sorted_edges[idx]
+            selected_games.append(Game(edge.team1, edge.team2))
+        
         self.isCulled = True
         return selected_games
 class Edge:
@@ -384,8 +465,11 @@ def GenerateSchedule(all_teams_list, algo_params, num_rounds_sched, num_courts=N
     games_added = 0
     for i in range(num_rounds_sched):
         master_round.WeightEdges(algo_params=algo_params) #re-weight the edges between rounds
-        # if i+1 ==5: master_round.Print(print_edges=True)
-        selected_games = master_round.Cull(numCourts=num_courts) #num_courts is the simultaneous number of games to be played
+        selected_games = master_round.CullOptimal(numCourts=num_courts) #num_courts is the simultaneous number of games to be played
+        if i+1 ==6: #DEBUG: Printing round's math and result !!!???
+            master_round.Print(print_edges=True) 
+            for game in selected_games:
+                game.Print()
         for game in selected_games: 
             if num_courts == None or (games_added < num_courts * num_rounds_sched): # Only add up to num_courts * num_rounds games to the schedule, since that's the maximum that can be played in the given number of rounds and courts; if num_courts is None, this condition will never be true and it will add all games
                 if verbose:
@@ -467,6 +551,6 @@ def SweepTest():
 if __name__ == "__main__":
     algo_params = AlgoParams(repeat_exponential=2, opponent_history_weight=1, teammate_history_weight=5, games_played_weight=100, recent_rounds_weight=000.0001) # This appears to be the best combo
     # Main(algo_params=algo_params, num_rounds=12, num_courts=1, num_men=3, save_csvs=True, print_overall=True, print_individuals=True)
-    Main(names_men=['John', 'Bob'], names_women=['Alice', 'Jane'], algo_params=algo_params, num_rounds=12, num_courts=1, save_csvs=True, print_overall=True, print_individuals=True)
+    Main(names_men=['Jake', 'Tommy', 'Tor', 'Wes', 'Matt', 'Rupak', 'Markiesh', 'Ray'], names_women=['Meghan', 'Kiley', 'Lindy','Sarah', 'Tiffani', 'Sacha', 'Amanda', 'Mary'], algo_params=algo_params, num_rounds=8, num_courts=4, save_csvs=True, print_overall=True, print_individuals=False)
     # SweepTest()
     print("Done")
